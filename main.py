@@ -16,7 +16,7 @@ bot = commands.Bot(command_prefix=".",intents=intents)
 #event for when bot goes online and is running
 # WAS MOVED TO ECONOMY.PY FOR NOW
 
-cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop"]
+cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop", "cogs.misc"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.
@@ -39,14 +39,13 @@ async def on_ready():
 async def hourly_gp():
     for user in db:
       if("print" in db[user]):
-        print("success")
+        
           # Grabs the printlvl of the user, and only increases their bal based on the printlvl
 
         if(db[user]["print"] == 10): 
           db[user]["bal"] += 10
           print(user + " increased by " + str(db[user]["print"]))
-      else:
-        print("failed")
+      
               
 @bot.command(hidden=True)
 async def ping(ctx):
@@ -108,6 +107,7 @@ class MyHelp(commands.MinimalHelpCommand):
             embed.set_author(name="Log Dog Bot", icon_url=bot.user.avatar_url)
 
             # embed.set_thumbnail(url="")
+            embed.set_thumbnail(url="https://i.imgur.com/Igx5Xa6.png")
 
             embed.set_footer(text="Bot developed and managed by Dissy#5926")
             await destination.send(embed=embed)

@@ -11,13 +11,14 @@ class Members(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
   
-  @commands.command()
+  @commands.command(hidden=True)
   async def listmembers(self, ctx):
 
     # First, we will make sure only CEO and Board users can use this command
 
     ceo_role = discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles)
     board_role = discord.utils.find(lambda r: r.name == 'Board', ctx.message.guild.roles)
+    dev_role = discord.utils.find(lambda r: r.name == 'Bot Dev', ctx.message.guild.roles)
 
     allowed = False
     
@@ -25,6 +26,9 @@ class Members(commands.Cog):
       allowed = True
 
     if(board_role in ctx.author.roles):
+      allowed = True
+
+    if(dev_role in ctx.author.roles):
       allowed = True
 
     if(allowed == False):
@@ -44,6 +48,11 @@ class Members(commands.Cog):
         for member in guild.members:
 
           excluded = False
+
+          if(str(member.id) in db): 
+            active = True
+          else: 
+            active = False
           
           for role in roles:
             
@@ -54,38 +63,60 @@ class Members(commands.Cog):
           if(excluded == False and member.bot == False):
             
             print(member)   
-            list += str(member) + "\n"  
+            list += str(member) + " - Active: " + str(active) + "\n"  
 
+    list1 = list[0:4019]
+    list2 = list[4019:]
+    
     embed = discord.Embed(
-          title = "Log Dog Member List",
-          description = list
+          title = "Log Dog Member List - Page 1",
+          description = list1
         )
+    embed2 = discord.Embed(
+          title = "Log Dog Member List - Page 2",
+          description = list2
+        )
+
     
     await ctx.send(embed=embed)
+    await ctx.send(embed=embed2)
     
   @commands.command(hidden=True)
   async def listdb(self, ctx):
 
     if ctx.author.id != 332601516626280450: return
       
-    embed = discord.Embed(title="All key-value entries in db")
+    embed = discord.Embed(title="All key-value entries in db - Page 1")
+    embed2 = discord.Embed(title="All key-value entries in db - Page 2")
 
+    i = 0
     for key, value in db.items():
       
       field_value = ""
+
       
       for a, b in value.items():
+
         
         field_value += f"{a} = {b}\n"
         
+        
       person = ctx.bot.get_user(int(key))
-      
-      embed.add_field(
-        name = person,
-        value = field_value
-      )
 
+      if(i > 24):
+        embed2.add_field(
+          name = person,
+          value = field_value
+        )
+      else:
+        embed.add_field(
+          name = person,
+          value = field_value
+        )
+      i += 1
+      
     await ctx.send(embed=embed)
+    await ctx.send(embed=embed2)
 
 def setup(bot):
   bot.add_cog(Members(bot))

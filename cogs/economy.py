@@ -147,7 +147,7 @@ class Economy(commands.Cog):
           await ctx.send("Wrong channel, dumbass")
           ctx.command.reset_cooldown(ctx)
           return
-          
+
         # If begging is successful ...
         if pick != 1:
 
@@ -167,14 +167,28 @@ class Economy(commands.Cog):
             if (db[user]["bal"] <= give):
                 give = db[user]["bal"]
 
-            beg_msg = f"Somebody gets annoyed with your begging... and mugs you! They took {give} "
+            embed = discord.Embed(
+              title = "You Got Mugged!",
+              description = "Somebody gets annoyed with your begging... and mugs you!"
+            )
 
-            embed = discord.Embed(title=beg_msg + " " + coin_emoji)
+            if(give != 0):
+              embed.add_field(
+                name = "You lost: ",
+                value = str(give) + " " + coin_emoji
+              )
+            else:
+              embed.add_field(
+                name = "Oh... you didn't have any money on you.",
+                value = "You lost " + str(give) + " " + coin_emoji
+              )
 
             if (user not in db):
                 db[user]["bal"] = 0
             else:
                 db[user]["bal"] -= give
+
+              
 
         embed.set_author(name=ctx.author.display_name,
                          icon_url=ctx.author.avatar_url)
@@ -289,7 +303,12 @@ class Economy(commands.Cog):
       coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
       
       try:
-        
+
+        if("@" not in ctx.message.content): 
+
+          ctx.command.reset_cooldown(ctx)
+          raise 
+          
         chance = random.randint(1,5)
           
         if member:
@@ -456,11 +475,19 @@ class Economy(commands.Cog):
                 ctx.command.reset_cooldown(ctx)
                 return
 
-            if (amount <= 0):
+            if (amount < 0):
                 embed.add_field(
                     name="Unable to Deposit",
                     value="You cannot deposit a negative amount of " +
                     coin_emoji)
+                await ctx.send(embed=embed)
+                ctx.command.reset_cooldown(ctx)
+                return
+              
+            if (amount == 0):
+                embed.add_field(
+                    name="Unable to Deposit",
+                    value="You have no money to deposit!")
                 await ctx.send(embed=embed)
                 ctx.command.reset_cooldown(ctx)
                 return
@@ -803,60 +830,60 @@ class Economy(commands.Cog):
       user = str(ctx.author.id)
       del db[user]["print"]
 
-          
-def setup(bot):
-    bot.add_cog(Economy(bot))
-  
-"""
-    # GIVE COMMAND
+
+ # GIVE COMMAND
     @commands.command(
         aliases=["gift"],
         help=
-        "Give someone a specified amount of mora. The mora will be taken from the user, and given to the recipient"
+        "Give someone a specified amount of gp. The money will be taken from the user, and given to the recipient"
     )
     async def give(self, ctx, member: discord.Member=None, arg=0):
 
-      mora_emoji = discord.utils.get(self.bot.emojis, name='Mora')
+      coins = str(discord.utils.get(self.bot.emojis, name='coins'))
 
-      user = str(ctx.author) + ".bal"
+      user = str(ctx.author.id)
 
       try:
 
-        embed = discord.Embed(title="Mora Gift")
-          
-        person = str(member.name)
-        receiver = str(member.name) + "#" + str(member.discriminator) + ".bal"
+        embed = discord.Embed(title="GP Gift")
 
         if member:
+          receiver = str(member.id)
           given = int(arg)
 
           if(given <= 0):
             embed.add_field(
               name=":x: Gifting Error :x:",
-              value="You cannot gift less than 1" + str(mora_emoji))
+              value="You cannot gift less than 1" + coins)
+            
             await ctx.send(embed = embed)
+            
             return
 
           if receiver not in db:
-            db[receiver] = 0
+            db[receiver] = {
+              "bal":given,
+              "bank":0
+            }
 
-          if (given > db[user]):
-            embed.add_field(name="You don't have " + str(arg) +
-                                str(mora_emoji) + " to give!",
+          if (given > db[user]["bal"]):
+            embed.add_field(name="You don't have " + str(arg) + " " +
+                                coins + " to give!",
                                 value=":sob:")
 
           else:
-            db[user] -= given
-            db[receiver] += given
+            db[user]["bal"] -= given
+            db[receiver]["bal"] += given
 
-            embed.add_field(name=f"You gifted {person} " + str(arg) +
-                                str(mora_emoji),
+            embed.add_field(name=f"You gifted {member.name} " + str(arg) +
+                                coins,
                                 value=":tada:")
         else:
           embed.add_field(
             name=":x: Gifting Error :x:",
-            value="Use 'd.help give' for proper usage of this command")
+            value="Use '.help give' for proper usage of this command")
           await ctx.send(embed = embed)
+          return
 
         await ctx.send(embed=embed)
       except Exception as e:
@@ -864,29 +891,21 @@ def setup(bot):
 
         embed.add_field(
           name=":x: Gifting Error :x:",
-          value="Use 'd.help give' for proper usage of this command")
+          value="Use '.help give' for proper usage of this command")
         await ctx.send(embed=embed)
-
-        
       
     @give.error
     async def give_error(self, ctx, error):
-      embed = discord.Embed(title="Mora Gift")
+      embed = discord.Embed(title="GP Gift")
       
       if isinstance(error, commands.BadArgument):
         embed.add_field(
                 name=":x: Gifting Error :x:",
-                value="Use 'd.help give' for proper usage of this command")
+                value="Use '.help give' for proper usage of this command")
         await ctx.send(embed=embed)
-        
-
-    
-
-           
-    
-
-    
-"""
+          
+def setup(bot):
+    bot.add_cog(Economy(bot))
 
 
 
