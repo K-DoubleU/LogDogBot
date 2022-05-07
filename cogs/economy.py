@@ -63,7 +63,7 @@ class Economy(commands.Cog):
     async def balance(self, ctx, member: discord.Member = None):
 
         coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
-        user = str(ctx.author)
+        user = str(ctx.author.id)
 
         allowed_channels = [972259001062526976,
                          971845967483658260]
@@ -289,25 +289,23 @@ class Economy(commands.Cog):
       coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
       
       try:
-
-        # Currently not using these author values, maybe later
-        
         
         chance = random.randint(1,5)
           
         if member:
 
+          user = str(member.id)
+
+          if user not in db:
+            await ctx.send("That user does not have an existing balance")
+            ctx.command.reset_cooldown(ctx)
+            return
+            
           if chance != 1:
             
             winner = str(ctx.author.id)
 
             robbed = str(member.name)
-            user = str(member.id)
-
-            if user not in db:
-              await ctx.send("That user does not have an existing balance")
-              ctx.command.reset_cooldown(ctx)
-              return
 
             max = int(db[user]["bal"] / 3)
 
@@ -336,7 +334,7 @@ class Economy(commands.Cog):
             else:
               # If fine is higher than what they have on hand, we set a variable to the remainder after subtracting what the user has on hand
               remainder = fine - int(db[user]["bal"])
-              print(remainder)
+              
 
               db[user]["bal"] = 0
 
@@ -348,9 +346,9 @@ class Economy(commands.Cog):
                 db[user]["bank"] -= remainder
                 
               # Build embed for failure
-              embed = discord.Embed(
-                title = "Robbery Failed",
-                description = "You were caught trying to rob " + str(member.name) + ", and were fined " + str(fine) + coin_emoji
+            embed = discord.Embed(
+              title = "Robbery Failed",
+              description = "You were caught trying to rob " + str(member.name) + ", and were fined " + str(fine) + coin_emoji
               )
                 
         else:
@@ -604,6 +602,8 @@ class Economy(commands.Cog):
           
         final_leaders = {}
 
+        coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
+      
         embed = discord.Embed(title="GP Leaderboard")
         
         for user in db:
@@ -625,7 +625,7 @@ class Economy(commands.Cog):
 
             person = ctx.bot.get_user(int(key))
 
-            embed.add_field(name=person, value=value)
+            embed.add_field(name=person, value=str(value) + " " + coin_emoji)
 
         await ctx.send(embed=embed)
 
@@ -691,7 +691,7 @@ class Economy(commands.Cog):
             else:
               # If fine is higher than what they have on hand, we set a variable to the remainder after subtracting what the user has on hand
               remainder = fine - int(db[user]["bal"])
-              print(remainder)
+             
 
               db[user]["bal"] = 0
 
@@ -753,6 +753,60 @@ class Economy(commands.Cog):
                 )
             embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
             await ctx.send(embed=embed)
+
+
+# PRINTER COMMAND
+    @commands.command(aliases=["print"], help="Shows the status of your printer, if you have one")
+    async def printer(self,ctx):
+
+      coins = str(discord.utils.get(self.bot.emojis, name='coins'))
+      user = str(ctx.author.id)
+      
+      embed = discord.Embed(
+        title = "Printer Status"
+      )
+
+      try:
+        if(db[user]["print"] < 10):
+
+          embed.add_field(
+            name = "No Printer Active",
+            value = "Purchase a printer in the Grand Exchange!"
+          )
+          await ctx.send(embed=embed)
+        else:
+
+          embed.add_field(
+            name = "Printer Active",
+            value = "Your printer is generating " + str(db[user]["print"]) + " " + coins + " per hour"
+          )
+          await ctx.send(embed=embed)
+          
+      except Exception as e:
+
+        print(e)
+        
+        embed = discord.Embed(
+        title = "Printer Status"
+        )
+        embed.add_field(
+          name = "No Printer Active",
+          value = "Purchase a printer in the Grand Exchange!"
+          )
+        await ctx.send(embed=embed)
+        
+    # Testing command to reset printer
+    @commands.command(hidden=True)
+    async def resetprinter(self, ctx):
+      if ctx.author.id != 332601516626280450: return
+
+      user = str(ctx.author.id)
+      del db[user]["print"]
+
+          
+def setup(bot):
+    bot.add_cog(Economy(bot))
+  
 """
     # GIVE COMMAND
     @commands.command(
@@ -831,42 +885,8 @@ class Economy(commands.Cog):
            
     
 
-    # PRINTER COMMAND
-    @commands.command(aliases=["print"], help="Shows the status of your printer, if you have one")
-    async def printer(self,ctx):
-      mora = str(ctx.author) + ".moralvl"
-      mora_emoji = str(discord.utils.get(self.bot.emojis, name='Mora'))
-
-
-      print(str(db[mora]))
-      
-      embed = discord.Embed(
-        title = "Printer Status"
-      )
-
-      if(db[mora] < 10):
-
-        embed.add_field(
-          name = "No Printer Active",
-          value = "Purchase a printer in 'd.shop'"
-        )
-        await ctx.send(embed=embed)
-      else:
-
-        embed.add_field(
-          name = "Printer Active",
-          value = "Your printer is generating " + str(db[mora]) + mora_emoji + " per hour"
-        )
-        await ctx.send(embed=embed)
-
-    # Testing command to reset printer
-    @commands.command(hidden=True)
-    async def resetprinter(self, ctx):
-      if ctx.author.id != 332601516626280450: return
-      mora_lvl = str(ctx.author) + ".moralvl"
-      db[mora_lvl] = 0
+    
 """
 
 
-def setup(bot):
-    bot.add_cog(Economy(bot))
+

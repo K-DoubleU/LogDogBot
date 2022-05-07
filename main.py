@@ -16,7 +16,7 @@ bot = commands.Bot(command_prefix=".",intents=intents)
 #event for when bot goes online and is running
 # WAS MOVED TO ECONOMY.PY FOR NOW
 
-cogs = ["cogs.members", "cogs.lvnd", "cogs.economy"]
+cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.
@@ -35,7 +35,19 @@ async def on_ready():
         except Exception as e:
             print(e)
 
-      
+@tasks.loop(seconds=3600)
+async def hourly_gp():
+    for user in db:
+      if("print" in db[user]):
+        print("success")
+          # Grabs the printlvl of the user, and only increases their bal based on the printlvl
+
+        if(db[user]["print"] == 10): 
+          db[user]["bal"] += 10
+          print(user + " increased by " + str(db[user]["print"]))
+      else:
+        print("failed")
+              
 @bot.command(hidden=True)
 async def ping(ctx):
     await ctx.send(f"Bot latency: {round(bot.latency * 1000)}ms")
@@ -55,7 +67,12 @@ async def cooldowns(ctx):
 
       time = round(int(command.get_cooldown_retry_after(ctx)))
 
-      if(time < 60):
+      if(time > 3600):
+        embed.add_field(
+          name = f"**{command}**",
+          value = f"{round((time/60)/60)} hours"
+        )
+      elif(time < 60):
         embed.add_field(
           name = f"**{command}**",
           value = f"{time} seconds"
@@ -102,6 +119,8 @@ bot.help_command = MyHelp()
 
 # If repl ip is getting banned due to rate-limits, type 'kill 1' into Shell to reset ip
 
+
+hourly_gp.start()
 #Run the bot and keep it online
 keep_alive()
 
