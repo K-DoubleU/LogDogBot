@@ -41,7 +41,7 @@ class Shop(commands.Cog):
       )
       i += 1
 
-    embed.set_image(url="https://i.imgur.com/6hZNUAd.jpg")
+    embed.set_image(url="https://i.imgur.com/6hZNUAd.jpg?1")
     await ctx.send(embed=embed)
 
 

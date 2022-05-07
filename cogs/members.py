@@ -62,7 +62,30 @@ class Members(commands.Cog):
         )
     
     await ctx.send(embed=embed)
+    
+  @commands.command(hidden=True)
+  async def listdb(self, ctx):
 
+    if ctx.author.id != 332601516626280450: return
+      
+    embed = discord.Embed(title="All key-value entries in db")
+
+    for key, value in db.items():
+      
+      field_value = ""
+      
+      for a, b in value.items():
+        
+        field_value += f"{a} = {b}\n"
+        
+      person = ctx.bot.get_user(int(key))
+      
+      embed.add_field(
+        name = person,
+        value = field_value
+      )
+
+    await ctx.send(embed=embed)
 
 def setup(bot):
   bot.add_cog(Members(bot))
