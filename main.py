@@ -11,9 +11,9 @@ from replit import db
 intents = discord.Intents.default()
 intents.members = True
 
-bot = commands.Bot(command_prefix=".",intents=intents)
+bot = commands.Bot(command_prefix=".",intents=discord.Intents.all())
 
-cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory"]
+cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.

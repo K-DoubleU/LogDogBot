@@ -23,19 +23,19 @@ class Inventory(commands.Cog):
         db[user]["inv"] = {}
         await ctx.send("Inventory created. Please try again.")
         return
-      elif("sap" in db[user]["inv"]):
-        db[user]["inv"]["sap"] += 1
+      elif("sapphire" in db[user]["inv"]):
+        db[user]["inv"]["sapphire"] += 1
       else:
-        db[user]["inv"]["sap"] = 1
+        db[user]["inv"]["sapphire"] = 1
 
     else:
       
       user = str(ctx.author.id)
 
-      if("sap" in db[user]["inv"]):
-        db[user]["inv"]["sap"] += 1
+      if("sapphire" in db[user]["inv"]):
+        db[user]["inv"]["sapphire"] += 1
       else:
-        db[user]["inv"]["sap"] = 1
+        db[user]["inv"]["sapphire"] = 1
 
   
   @commands.command(aliases = ["bag", "items", "inv"], help = "Displays your inventory. Use '.help Inventory' for a list of inventory-related commands")
@@ -43,7 +43,7 @@ class Inventory(commands.Cog):
 
     emoji = {
       "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
-      "sap" : str(discord.utils.get(self.bot.emojis, name='sap'))
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire'))
     }
     
     try:
@@ -92,6 +92,105 @@ class Inventory(commands.Cog):
 
       await ctx.send(embed=embed)
         
+    
+    except Exception as e:
+      print(e)
+
+  # SELL COMMAND
+  @commands.command(help = "Sell an item in your inventory. You can provide an amount to sell multiple.\nExample: '.sell sapphire'\nExample: '.sell sapphire 32'")
+  async def sell(self, ctx, *args):
+
+    emoji = {
+      "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire'))
+    }
+
+    itemlist = {
+      "sapphire":420
+    }
+
+    user = str(ctx.author.id)
+    
+    try:
+
+      embed = discord.Embed(
+        title = "Order Status"
+      )
+      
+      if("inv" not in db[user]):
+        await ctx.send("No inventory to sell from")
+        return
+
+      # Respond if a item isn't specified by the user
+      if(str(args) == "()" or len(args) > 2):
+        embed.add_field(
+            name = "Sell Error",
+            value = "Use '.help sell' for proper usage of this command"
+          )
+        await ctx.send(embed=embed)
+        return
+      
+      if(len(args) > 1):
+        
+        arg = str(args[0])
+        amount = int(args[-1])
+        
+      else:
+        
+        arg = str(args[0])
+        amount = 1
+        
+      print(arg)
+
+      itemexist = False
+
+      for x in itemlist.keys():
+        if(arg in x):
+          itemexist=True
+          arg = x
+      # First, we make sure the item they're trying to sell is actually an item in the list
+      if(itemexist):
+
+        # Also need to make sure the user has that item, and that amount
+        if(arg not in db[user]["inv"]):
+          embed.add_field(
+            name = "Sell Error",
+            value = "You do not have any " + emoji[arg] + " to sell!"
+          )
+          await ctx.send(embed=embed)
+          return
+
+        if(amount > db[user]["inv"][arg]):
+          embed.add_field(
+            name = "Sell Error",
+            value = "You do not have " + str(amount) + " " + emoji[arg] + " to sell!"
+          )
+          await ctx.send(embed=embed)
+          return
+        
+        # If it's gotten past this point, we should be good to sell
+        profit = amount * itemlist[arg]
+        
+        embed.add_field(
+          name = "Item(s) Sold Successfully",
+          value = "Sold: " + str(amount) + " " + emoji[arg] + "\nProfit: " + str(profit) + " " + emoji["coins"]
+        )
+
+        db[user]["inv"][arg] -= amount
+        db[user]["bal"] += profit
+
+        if(db[user]["inv"][arg] == 0):
+          print(str(db[user]["inv"][arg]))
+          del db[user]["inv"][arg]
+      else:
+        embed.add_field(
+            name = "Sell Error",
+            value = "Use '.help sell' for proper usage of this command"
+          )
+        await ctx.send(embed=embed)
+        return
+
+      await ctx.send(embed=embed)
     
     except Exception as e:
       print(e)

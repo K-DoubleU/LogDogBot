@@ -67,7 +67,7 @@ class Shop(commands.Cog):
       if(str(args) == "()"):
         embed.add_field(
             name = "Purchase Error",
-            value = "Use 'd.help buy' for proper usage of this command"
+            value = "Use '.help buy' for proper usage of this command"
           )
         await ctx.send(embed=embed)
         return
@@ -129,7 +129,7 @@ class Shop(commands.Cog):
       else:
         embed.add_field(
             name = "Purchase Error",
-            value = "Use 'd.help buy' for proper usage of this command"
+            value = "Use '.help buy' for proper usage of this command"
           )
         await ctx.send(embed=embed)
         return

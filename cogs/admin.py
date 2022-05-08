@@ -34,6 +34,7 @@ class Admin(commands.Cog):
     if("gamba" in message.content.lower()):
       await message.add_reaction(gamba)
 
+  # DEV LOG COMMAND
   @commands.command(hidden=True)
   async def devlog(self, ctx):
 
@@ -54,6 +55,7 @@ class Admin(commands.Cog):
       )
 
     print("Log sent")
+    await ctx.message.delete()
     await ctx.send(embed=embed)
 
   # GP Giveaway command

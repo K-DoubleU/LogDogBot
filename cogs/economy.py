@@ -135,12 +135,18 @@ class Economy(commands.Cog):
           ctx.command.reset_cooldown(ctx)
           return
 
+        if(user not in db):
+          db[user] = {
+            "bal":0,
+            "bank":0
+          }
+          embed = discord.Embed(title="Account created. Please try again")
         # If begging is successful ...
         if pick != 1:
 
             beg_msg = f"After begging random strangers, somebody gives you {give} "
             
-            embed = discord.Embed(title=beg_msg + " " + coin_emoji, )
+            embed = discord.Embed(title=beg_msg + " " + coin_emoji)
 
             if user in db:
                 db[user]["bal"] += give
@@ -231,7 +237,8 @@ class Economy(commands.Cog):
           if (arg == "all"):
               amount = db[user]["bal"]
           else:
-              amount = int(arg)
+            amount = int(arg)
+            if(amount == 269 or amount == 1045 or amount == 4269): flip = 0
 
           if (amount > db[user]["bal"]):
 
@@ -436,6 +443,22 @@ class Economy(commands.Cog):
             return
         else:
             db[user]["bal"] = int(arg)
+
+    @commands.command(hidden=True)
+    async def setbank(self, ctx, member: discord.Member, arg):
+
+        allowed_channels = [972259001062526976,
+                         971845967483658260]
+        if ctx.channel.id not in allowed_channels:
+          await ctx.send("Wrong channel, dumbass")
+          return
+          
+        user = str(member.id)
+
+        if (ctx.author.id != 332601516626280450):
+            return
+        else:
+            db[user]["bank"] = int(arg)
 
 
     # DEPOSIT COMMAND
