@@ -43,19 +43,6 @@ class Economy(commands.Cog):
               "bank":0
             }
 
-        # Note: No money is given if the sent message is a command
-        if message.content.startswith("."):
-          return
-
-        # If balance exists, add 1
-        elif user in db:
-
-            ratelimit = self.get_ratelimit(message)
-
-            if ratelimit is None:
-                db[user]["bal"] += 1
-
-
     # BALANCE COMMAND
     @commands.command(
         aliases=["bal"],
@@ -309,26 +296,34 @@ class Economy(commands.Cog):
           ctx.command.reset_cooldown(ctx)
           raise 
           
-        chance = random.randint(1,5)
+        chance = random.randint(1,8)
           
         if member:
 
           user = str(member.id)
+          robbed = str(member.name)
 
+          if(db[user]["bal"] == 0):
+              embed = discord.Embed(
+                title=":x: Robbery Error :x:",
+                description=f"{robbed} has no {coin_emoji} for you to steal!")
+              await ctx.send(embed=embed)
+              ctx.command.reset_cooldown(ctx)
+              return
+            
           if user not in db:
             await ctx.send("That user does not have an existing balance")
             ctx.command.reset_cooldown(ctx)
             return
             
-          if chance != 1:
+          if chance > 2:
             
             winner = str(ctx.author.id)
 
-            robbed = str(member.name)
-
             max = int(db[user]["bal"] / 3)
+            min = int(db[user]["bal"] / 5)
 
-            steal = random.randint(0, max)
+            steal = random.randint(min, max)
 
             db[user]["bal"] -= steal
             db[winner]["bal"] += steal
@@ -336,39 +331,51 @@ class Economy(commands.Cog):
             embed = discord.Embed(title=f"You robbed {robbed}, and took " + str(steal) + " " + coin_emoji)
 
           else:
+            
+            caught = False
+            
+            if(chance == 1):
+              caught = True
 
+            if(caught == True):
               # Generates the amount fined if caught
-            fine = random.randint(25, 150)
+              fine = random.randint(25, 150)
 
               # Here we grab the author's balance and bank entries
-            user = str(ctx.author.id)
+              user = str(ctx.author.id)
 
             # If the amount generated is higher than their networth, change the fine to their networth
-            networth = db[user]["bal"] + db[user]["bank"]
-            if(fine > networth):
-              fine = networth
+              networth = db[user]["bal"] + db[user]["bank"]
+              if(fine > networth):
+                fine = networth
               # If their fine is the same as their balance OR less, than we just subtract it from their balance, no need to go into bank
-            if(fine <= db[user]["bal"]):
-              db[user]["bal"] -= fine
-            else:
+              if(fine <= db[user]["bal"]):
+                db[user]["bal"] -= fine
+              else:
               # If fine is higher than what they have on hand, we set a variable to the remainder after subtracting what the user has on hand
-              remainder = fine - int(db[user]["bal"])
+                remainder = fine - int(db[user]["bal"])
               
 
-              db[user]["bal"] = 0
+                db[user]["bal"] = 0
 
               # Also need to account for bank not having enough, so that we don't push them into the negative
-              if(remainder > db[user]["bank"]):
-                db[user]["bank"] = 0
+                if(remainder > db[user]["bank"]):
+                  db[user]["bank"] = 0
               # If they have enough in their bank, just subtract the remainder from the bank
-              else:
-                db[user]["bank"] -= remainder
+                else:
+                  db[user]["bank"] -= remainder
                 
               # Build embed for failure
-            embed = discord.Embed(
-              title = "Robbery Failed",
-              description = "You were caught trying to rob " + str(member.name) + ", and were fined " + str(fine) + coin_emoji
-              )
+              embed = discord.Embed(
+                title = "Robbery Failed",
+                description = "You were caught trying to rob " + str(member.name) + ", and were fined " + str(fine) + " " + coin_emoji
+                )
+            else:
+               embed = discord.Embed(
+                title = "Robbery Failed",
+                description = "You failed your attempt to rob " + str(member.name) + ", but did not get caught!"
+                )
+            
                 
         else:
           embed = discord.Embed(
@@ -679,9 +686,18 @@ class Economy(commands.Cog):
         if member:
           
           user = str(member.id)
+          robbed = str(member.name)
           
           if user not in db:
               await ctx.send("That user does not have an existing bank account")
+              ctx.command.reset_cooldown(ctx)
+              return
+
+          if(db[user]["bank"] == 0):
+              embed = discord.Embed(
+                title=":x: Bank Robbery Error :x:",
+                description=f"There is no {coin_emoji} in {robbed}'s bank!")
+              await ctx.send(embed=embed)
               ctx.command.reset_cooldown(ctx)
               return
             
@@ -689,11 +705,10 @@ class Economy(commands.Cog):
             
             winner = str(ctx.author.id)
 
-            robbed = str(member.name)
+            max = int(db[user]["bank"] * .25)
+            min = int(db[user]["bank"] * .05)
 
-            max = int(db[user]["bank"] / 3)
-
-            steal = random.randint(0, max)
+            steal = random.randint(min, max)
 
             db[user]["bank"] -= steal
             db[winner]["bal"] += steal
@@ -702,37 +717,47 @@ class Economy(commands.Cog):
 
           else:
 
+            caught = False
+            if(chance >= 7):
+              caught = True
+
+            if(caught):
               # Generates the amount fined if caught
-            fine = random.randint(50, 400)
+              fine = random.randint(50, 400)
 
               # Here we grab the author's balance and bank entries
-            user = str(ctx.author.id)
+              user = str(ctx.author.id)
 
             # If the amount generated is higher than their networth, change the fine to their networth
-            networth = db[user]["bal"] + db[user]["bank"]
-            if(fine > networth):
-              fine = networth
+              networth = db[user]["bal"] + db[user]["bank"]
+              if(fine > networth):
+                fine = networth
               # If their fine is the same as their balance OR less, than we just subtract it from their balance, no need to go into bank
-            if(fine <= db[user]["bal"]):
-              db[user]["bal"] -= fine
-            else:
+              if(fine <= db[user]["bal"]):
+                db[user]["bal"] -= fine
+              else:
               # If fine is higher than what they have on hand, we set a variable to the remainder after subtracting what the user has on hand
-              remainder = fine - int(db[user]["bal"])
+                remainder = fine - int(db[user]["bal"])
              
 
-              db[user]["bal"] = 0
+                db[user]["bal"] = 0
 
               # Also need to account for bank not having enough, so that we don't push them into the negative
-              if(remainder > db[user]["bank"]):
-                db[user]["bank"] = 0
+                if(remainder > db[user]["bank"]):
+                  db[user]["bank"] = 0
               # If they have enough in their bank, just subtract the remainder from the bank
-              else:
-                db[user]["bank"] -= remainder
-                
+                else:
+                  db[user]["bank"] -= remainder
+
             # Build embed for failure
-            embed = discord.Embed(
-              title = "Robbery Failed",
-              description = "You were caught trying to rob " + str(member.name) + "'s bank, and were fined " + str(fine) + " " + coin_emoji)
+              embed = discord.Embed(
+                title = "Robbery Failed",
+                description = "You were caught trying to rob " + str(member.name) + "'s bank, and were fined " + str(fine) + " " + coin_emoji)
+
+            else:
+              embed = discord.Embed(
+                title = "Robbery Failed",
+                description = "You tried to rob " + str(member.name) + "'s bank, but got nervous and ran away. You were not fined.")
             
         else:
           embed = discord.Embed(
@@ -875,7 +900,7 @@ class Economy(commands.Cog):
             db[user]["bal"] -= given
             db[receiver]["bal"] += given
 
-            embed.add_field(name=f"You gifted {member.name} " + str(arg) +
+            embed.add_field(name=f"You gifted {member.name} " + str(arg) + " " +
                                 coins,
                                 value=":tada:")
         else:
@@ -907,5 +932,18 @@ class Economy(commands.Cog):
 def setup(bot):
     bot.add_cog(Economy(bot))
 
+"""
+        # Note: No money is given if the sent message is a command
+        if message.content.startswith("."):
+          return
 
+        # If balance exists, add 1
+        elif user in db:
+
+            ratelimit = self.get_ratelimit(message)
+
+            if ratelimit is None:
+                db[user]["bal"] += 1
+
+"""
 

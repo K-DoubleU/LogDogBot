@@ -13,10 +13,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=".",intents=intents)
 
-#event for when bot goes online and is running
-# WAS MOVED TO ECONOMY.PY FOR NOW
-
-cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop", "cogs.misc"]
+cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.
@@ -35,6 +32,7 @@ async def on_ready():
         except Exception as e:
             print(e)
 
+
 @tasks.loop(seconds=3600)
 async def hourly_gp():
     for user in db:
@@ -46,7 +44,7 @@ async def hourly_gp():
           db[user]["bal"] += 10
           print(user + " increased by " + str(db[user]["print"]))
       
-              
+      
 @bot.command(hidden=True)
 async def ping(ctx):
     await ctx.send(f"Bot latency: {round(bot.latency * 1000)}ms")
