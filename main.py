@@ -86,7 +86,10 @@ async def cooldowns(ctx):
       name = "No Cooldowns",
       value = "Go Crazy!"
     )
-      
+
+  embed.set_author(
+    name=ctx.author.display_name,
+    icon_url=ctx.author.avatar_url)
   await ctx.send(embed=embed)
 
 

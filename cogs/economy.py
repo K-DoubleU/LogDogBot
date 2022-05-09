@@ -122,7 +122,7 @@ class Economy(commands.Cog):
     @commands.cooldown(1, 300, commands.BucketType.user)
     async def beg(self, ctx):
 
-        pick = random.randint(1, 8)
+        pick = random.randint(1, 10)
         give = random.randint(20, 75)
         coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
 
@@ -144,9 +144,11 @@ class Economy(commands.Cog):
         # If begging is successful ...
         if pick != 1:
 
-            beg_msg = f"After begging random strangers, somebody gives you {give} "
+            beg_msg = f"A random stranger gives you some money\nGained: **+{give}**"
             
-            embed = discord.Embed(title=beg_msg + " " + coin_emoji)
+            embed = discord.Embed(
+              title = ":white_check_mark: Begging Successful",
+              description = beg_msg + " " + coin_emoji)
 
             if user in db:
                 db[user]["bal"] += give
@@ -173,7 +175,7 @@ class Economy(commands.Cog):
             else:
               embed.add_field(
                 name = "Oh... you didn't have any money on you.",
-                value = "You lost " + str(give) + " " + coin_emoji
+                value = "You lost: **" + str(give) + "** " + coin_emoji
               )
 
             if (user not in db):
@@ -193,19 +195,19 @@ class Economy(commands.Cog):
             minutes = round(error.retry_after / 60)
 
             if (error.retry_after >= 60):
-                em = discord.Embed(
-                    title=f"Beg is on cooldown!",
+                embed = discord.Embed(
+                    title=f":timer: Beg is on cooldown!",
                     description=f"Try again in {minutes} minutes.")
 
             else:
-                em = discord.Embed(
-                    title=f"Beg is on cooldown!",
+                embed = discord.Embed(
+                    title=f":timer: Beg is on cooldown!",
                     description=f"Try again in {int(error.retry_after)} seconds"
                 )
 
-            em.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
+            embed.set_author(name=ctx.author.display_name,icon_url=ctx.author.avatar_url)
 
-        await ctx.send(embed=em)
+        await ctx.send(embed=embed)
 
 
     # COINFLIP COMMAND
@@ -227,7 +229,7 @@ class Economy(commands.Cog):
         coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
 
         embed = discord.Embed(
-          title = "Coinflip"
+          title = ":coin: Coinflip"
         )
 
         try:
@@ -243,13 +245,13 @@ class Economy(commands.Cog):
           if (amount > db[user]["bal"]):
 
               embed.add_field(
-                name = "Coinflip Error",
+                name = ":x: Coinflip Cancelled",
                 value ="You don't have this much " + coin_emoji + " dipshit :poop:")
 
           elif (amount <= 0):
 
               embed.add_field(
-                name = "Coinflip Error",
+                name = ":x: Coinflip Cancelled",
                 value ="Can't flip the air, poor loser :poop:")
 
           else:
@@ -258,14 +260,14 @@ class Economy(commands.Cog):
                   db[user]["bal"] += amount
 
                   embed.add_field(
-                      name = "You won the coinflip!",
-                      value = f"You earned {amount} " + coin_emoji)
+                      name = ":partying_face: You WON the coinflip!",
+                      value = f"You earned: **+{amount}** " + coin_emoji)
               else:
                   db[user]["bal"] -= amount
 
                   embed.add_field(
-                      name = "You lost the coinflip...",
-                      value = f"You lost {amount} " + coin_emoji)
+                      name = ":sob: You LOST the coinflip...",
+                      value = f"You lost: **-{amount}** " + coin_emoji)
 
           embed.set_author(
             name = ctx.author.display_name,
@@ -275,7 +277,7 @@ class Economy(commands.Cog):
         
         except Exception as e:
           embed.add_field(
-              name = "Coinflip Error",
+              name = ":x: Coinflip Error :x:",
               value = "Use '.help coinflip' for proper usage of this command")
           await ctx.send(embed=embed)
           
@@ -314,6 +316,9 @@ class Economy(commands.Cog):
               embed = discord.Embed(
                 title=":x: Robbery Error :x:",
                 description=f"{robbed} has no {coin_emoji} for you to steal!")
+              embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
               await ctx.send(embed=embed)
               ctx.command.reset_cooldown(ctx)
               return
@@ -335,7 +340,13 @@ class Economy(commands.Cog):
             db[user]["bal"] -= steal
             db[winner]["bal"] += steal
 
-            embed = discord.Embed(title=f"You robbed {robbed}, and took " + str(steal) + " " + coin_emoji)
+            embed = discord.Embed(
+              title = ":white_check_mark: Robbery Successful",
+              description = f"You robbed {robbed}\nYou stole: **" + str(steal) + "** " + coin_emoji)
+            
+            embed.set_author(
+              name = ctx.author.display_name,
+              icon_url=ctx.author.avatar_url)
 
           else:
             
@@ -374,21 +385,31 @@ class Economy(commands.Cog):
                 
               # Build embed for failure
               embed = discord.Embed(
-                title = "Robbery Failed",
+                title = ":x: Robbery Failed",
                 description = "You were caught trying to rob " + str(member.name) + ", and were fined " + str(fine) + " " + coin_emoji
                 )
+              embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
             else:
-               embed = discord.Embed(
-                title = "Robbery Failed",
+              embed = discord.Embed(
+                title = ":x: Robbery Failed",
                 description = "You failed your attempt to rob " + str(member.name) + ", but did not get caught!"
                 )
+              embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
+              
             
                 
         else:
           embed = discord.Embed(
-            title="Rob Error",
+            title=":x: Rob Error :x:",
             description="You must @Mention a user to rob!\nSee 'd.help rob' for more info"
           )
+          embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
 
           await ctx.send(embed=embed)
           ctx.command.reset_cooldown(ctx)
@@ -414,16 +435,16 @@ class Economy(commands.Cog):
             if (error.retry_after > 60):
               
                 embed = discord.Embed(
-                    title=f"Rob is on cooldown!",
+                    title=f":timer: Rob is on cooldown!",
                     description=f"Try again in {int(minutes)} minutes")
               
             else:
               
                 embed = discord.Embed(
-                    title=f"Rob is on cooldown!",
+                    title=f":timer: Rob is on cooldown!",
                     description=f"Try again in {int(error.retry_after)} seconds"
                 )
-            embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
+            embed.set_author(name=ctx.author.display_name,icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
 
 
@@ -442,6 +463,7 @@ class Economy(commands.Cog):
         if (ctx.author.id != 332601516626280450):
             return
         else:
+            await ctx.message.delete()
             db[user]["bal"] = int(arg)
 
     @commands.command(hidden=True)
@@ -458,6 +480,7 @@ class Economy(commands.Cog):
         if (ctx.author.id != 332601516626280450):
             return
         else:
+            await ctx.message.delete()
             db[user]["bank"] = int(arg)
 
 
@@ -498,7 +521,7 @@ class Economy(commands.Cog):
             # Here we handle different cases, including any errors
             # If the user enters more money than is in their balance, return an error and exit the command
             if (amount > db[user]["bal"]):
-                embed.add_field(name="Unable to Deposit",
+                embed.add_field(name=":x: Unable to Deposit",
                                 value="You don't have " + str(amount) +
                                 coin_emoji + " to deposit!")
                 await ctx.send(embed=embed)
@@ -507,7 +530,7 @@ class Economy(commands.Cog):
 
             if (amount < 0):
                 embed.add_field(
-                    name="Unable to Deposit",
+                    name=":x: Unable to Deposit",
                     value="You cannot deposit a negative amount of " +
                     coin_emoji)
                 await ctx.send(embed=embed)
@@ -516,8 +539,8 @@ class Economy(commands.Cog):
               
             if (amount == 0):
                 embed.add_field(
-                    name="Unable to Deposit",
-                    value="You have no money to deposit!")
+                    name=":x: Unable to Deposit",
+                    value=f"You have **0** {coin_emoji} to deposit!")
                 await ctx.send(embed=embed)
                 ctx.command.reset_cooldown(ctx)
                 return
@@ -531,9 +554,9 @@ class Economy(commands.Cog):
             db[user]["bal"] -= amount
 
             embed.add_field(
-                name="Deposit Successful",
-                value="You deposited " + str(amount) + " " + coin_emoji +
-                " into your bank!\nCurrent Bank Balance: " + str(db[user]["bank"]) + " " + 
+                name=":white_check_mark: Deposit Successful",
+                value="Deposited: **" + str(amount) + "** " + coin_emoji +
+                "\n\nBank: **" + str(db[user]["bank"]) + "** " + 
                 coin_emoji)
 
             embed.set_author(name=ctx.author.display_name,
@@ -546,7 +569,7 @@ class Economy(commands.Cog):
             print(e)
 
             embed.add_field(
-                name="Deposit Error",
+                name=":x: Deposit Error :x:",
                 value="Use '.help deposit' for proper usage of this command")
           
             ctx.command.reset_cooldown(ctx)
@@ -558,11 +581,12 @@ class Economy(commands.Cog):
         if isinstance(error, commands.CommandOnCooldown):
  
             embed = discord.Embed(
-              title=f"Deposit is on cooldown!",
+              title=f":timer: Deposit is on cooldown!",
               description=f"Try again in {int(error.retry_after)} seconds"
               )
 
-            embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
+            embed.set_author(name=ctx.author.display_name,
+                             icon_url=ctx.author.avatar_url)
 
             await ctx.send(embed=embed)
 
@@ -656,12 +680,18 @@ class Economy(commands.Cog):
         if ctx.channel.id not in allowed_channels:
             await ctx.send("Wrong channel, dumbass")
             return
-          
+
+        itemlist = {
+          "sapphire":420
+        }
+      
         final_leaders = {}
 
         coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
       
-        embed = discord.Embed(title="GP Leaderboard")
+        embed = discord.Embed(title="Log Dog Bot Leaderboard")
+
+        embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
         
         for user in db:
 
@@ -674,6 +704,15 @@ class Economy(commands.Cog):
 
                 total += db[user]["bank"]
 
+                # If the user has an inventory, then check if they have items, and add the item values to their networth
+                totaltoadd = 0
+                if("inv" in db[user]):
+                  if(len(db[user]["inv"]) > 0):
+                    for item, price in itemlist.items():
+                      if(item in db[user]["inv"]):
+                        totaltoadd += db[user]["inv"][item] * itemlist[item]
+                    
+                total += totaltoadd
                 final_leaders[user] = total
 
         for key, value in sorted(final_leaders.items(),
@@ -683,6 +722,8 @@ class Economy(commands.Cog):
             person = ctx.bot.get_user(int(key))
 
             embed.add_field(name=person, value=str(value) + " " + coin_emoji)
+
+        embed.set_footer(text="Networth values include the value(s) of the user's gems")
 
         await ctx.send(embed=embed)
 
@@ -720,6 +761,11 @@ class Economy(commands.Cog):
               embed = discord.Embed(
                 title=":x: Bank Robbery Error :x:",
                 description=f"There is no {coin_emoji} in {robbed}'s bank!")
+            
+              embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
+            
               await ctx.send(embed=embed)
               ctx.command.reset_cooldown(ctx)
               return
@@ -737,6 +783,9 @@ class Economy(commands.Cog):
             db[winner]["bal"] += steal
 
             embed = discord.Embed(title=f"You robbed {robbed}'s bank, and took " + str(steal) + " " + coin_emoji)
+            embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
 
           else:
 
@@ -774,13 +823,19 @@ class Economy(commands.Cog):
 
             # Build embed for failure
               embed = discord.Embed(
-                title = "Robbery Failed",
+                title = ":x: Bank Robbery Failed",
                 description = "You were caught trying to rob " + str(member.name) + "'s bank, and were fined " + str(fine) + " " + coin_emoji)
+              embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
 
             else:
               embed = discord.Embed(
-                title = "Robbery Failed",
+                title = ":x: Bank Robbery Failed",
                 description = "You tried to rob " + str(member.name) + "'s bank, but got nervous and ran away. You were not fined.")
+              embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
             
         else:
           embed = discord.Embed(
@@ -804,7 +859,7 @@ class Economy(commands.Cog):
 
             await ctx.send(embed=embed)
 
-    @ bankrob.error
+    @bankrob.error
     async def bankrob_cooldown(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
             minutes = round(error.retry_after / 60)
@@ -826,7 +881,9 @@ class Economy(commands.Cog):
                     title=f"Bankrob is on cooldown!",
                     description=f"Try again in {int(error.retry_after)} seconds"
                 )
-            embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
+            embed.set_author(
+                name = ctx.author.display_name,
+                icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
 
 
@@ -834,12 +891,22 @@ class Economy(commands.Cog):
     @commands.command(aliases=["print"], help="Shows the status of your printer, if you have one")
     async def printer(self,ctx):
 
+      allowed_channels = [972259001062526976,
+                         971845967483658260]
+      if ctx.channel.id not in allowed_channels:
+        await ctx.send("Wrong channel, dumbass")
+        return
+        
       coins = str(discord.utils.get(self.bot.emojis, name='coins'))
       user = str(ctx.author.id)
       
       embed = discord.Embed(
         title = "Printer Status"
       )
+
+      embed.set_author(
+        name = ctx.author.display_name,
+        icon_url=ctx.author.avatar_url)
 
       try:
         if(db[user]["print"] < 10):
@@ -887,6 +954,12 @@ class Economy(commands.Cog):
     )
     async def give(self, ctx, member: discord.Member=None, arg=0):
 
+      allowed_channels = [972259001062526976,
+                         971845967483658260]
+      if ctx.channel.id not in allowed_channels:
+        await ctx.send("Wrong channel, dumbass")
+        return
+          
       coins = str(discord.utils.get(self.bot.emojis, name='coins'))
 
       user = str(ctx.author.id)
@@ -910,18 +983,30 @@ class Economy(commands.Cog):
 
           if receiver not in db:
             db[receiver] = {
-              "bal":given,
+              "bal":0,
               "bank":0
             }
 
-          if (given > db[user]["bal"]):
+          if (given > (db[user]["bal"] + db[user]["bank"])):
             embed.add_field(name="You don't have " + str(arg) + " " +
                                 coins + " to give!",
                                 value=":sob:")
 
           else:
+
+            remainder = 0
+            #Find remainder IF amount is more than the user's balance
+            if(given > db[user]["bal"]):
+              
+              remainder = given - db[user]["bal"]
+              
+              given = db[user]["bal"]
+            
             db[user]["bal"] -= given
-            db[receiver]["bal"] += given
+            db[user]["bank"] -= remainder
+
+            # Add the amount to the receiver
+            db[receiver]["bal"] += (given+remainder)
 
             embed.add_field(name=f"You gifted {member.name} " + str(arg) + " " +
                                 coins,

@@ -58,14 +58,36 @@ class Admin(commands.Cog):
     await ctx.message.delete()
     await ctx.send(embed=embed)
 
+  @commands.command(hidden=True)
+  async def tierlist(self,ctx):
+    minions = ["Fridge", "x0Fridge", "doucheFridge", "BoobaFridge", "Fridgium", "FridgeOnABridge", "FridgeOnABridgeNearARidgeAndAlso", "FridgeChamp"]
+
+    embed = discord.Embed(
+      title = "Fridge Tier List"
+    )
+    for minion in minions:
+
+      emoji = str(discord.utils.get(self.bot.emojis, name=minion))
+      embed.add_field(
+        name = str(minions.index(minion) + 1),
+        value = emoji,
+        inline = False
+      )
+
+    await ctx.message.delete()
+    await ctx.send(embed=embed)
+      
+
   # GP Giveaway command
-  @commands.command(aliases = ["giveaway", "drop"], help = "Starts a giveaway in the current channel. Giveaways will currently last for 5 minutes by default. You must specify the amount of gold to be included in the giveaway. The prize value must be between 100 and 10000\nExample: '.startgiveaway 5000'")
+  @commands.command(aliases = ["giveaway", "drop"], help = "Starts a giveaway in the current channel. Giveaways will currently last for 5 minutes by default. You must specify the amount of gold to be included in the giveaway. The prize value must be between 100 and 100000\nExample: '.startgiveaway 5000'")
   async def startgiveaway(self, ctx, arg):
 
     ceo_role = discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles)
 
     dev_role = discord.utils.find(lambda r: r.name == 'Bot Dev', ctx.message.guild.roles)
 
+    await ctx.message.delete()
+    
     allowed = False
     
     if(ceo_role in ctx.author.roles):
@@ -82,11 +104,20 @@ class Admin(commands.Cog):
     try:
       prize = int(arg)
     
-      if(prize < 100 or prize > 10000):
+      if(prize < 100 or prize > 100000):
         raise
     
       time = 300
 
+      dropembed = discord.Embed(
+        title = ":partying_face: Drop Party!",
+        description = "A drop party has started in <#972947765690765372>"
+      )
+
+      dropembed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
+
+      await ctx.send(embed=dropembed)
+      
       embed = discord.Embed(
         title = ":partying_face: Drop Party! " + coins,
         description = "React with :tada: to enter the giveaway!"
@@ -105,13 +136,12 @@ class Admin(commands.Cog):
       embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
 
       embed.set_image(url="https://i.imgur.com/Zc4AWrF.png?1")
-    
 
-      await ctx.message.delete()
+      giveaway_channel = ctx.bot.get_channel(972947765690765372)
     
-      msg = await ctx.send(embed = embed)
+      msg = await giveaway_channel.send(embed = embed)
     
-      reactions = await msg.add_reaction("🎉")
+      await msg.add_reaction("🎉")
 
       while time >= 0:
         if time <= 60:
@@ -134,7 +164,7 @@ class Admin(commands.Cog):
 
       await asyncio.sleep(time)
 
-      newmsg = await ctx.fetch_message(msg.id)
+      newmsg = await giveaway_channel.fetch_message(msg.id)
     
       users = await newmsg.reactions[0].users().flatten()
     
@@ -146,6 +176,7 @@ class Admin(commands.Cog):
           description = "Well that's awkward... nobody entered the giveaway"
         )
         await ctx.send(embed=winembed)
+        await giveaway_channel.send(embed=winembed)
         return
       
       winner = random.choice(users)
@@ -169,6 +200,9 @@ class Admin(commands.Cog):
       winembed.set_footer(text="This money has been sent directly to your bank :)")
 
       await ctx.send(embed=winembed)
+
+      await giveaway_channel.send(person.mention)
+      await giveaway_channel.send(embed=winembed)
     
       if(winnerid in db):
         db[winnerid]["bank"] += prize
@@ -184,7 +218,68 @@ class Admin(commands.Cog):
                            description="Use '.help give' for proper usage of this command")
 
       await ctx.send(embed=embed)
+
+  # RESETCD COMMAND
+  @commands.command(hidden=True)
+  async def resetcd(self, ctx, member: discord.Member = None):
     
+    user = str(ctx.author.id)
+    
+    if user != "332601516626280450": return
+      
+    print("working")
+
+    if(member):
+
+      ctx.author = member
+      ctx.message.author = member
+
+      for command in ctx.bot.commands:
+        print("command found")
+        if command.is_on_cooldown(ctx):
+          print("reset succeeded")
+          command.reset_cooldown(ctx)
+      return
+      
+    else:
+      for command in ctx.bot.commands:
+        print("command found")
+        if command.is_on_cooldown(ctx):
+          print("reset succeeded")
+          command.reset_cooldown(ctx)
+
+  @commands.command(hidden=True)
+  async def resetallcd(self,ctx):
+    
+    if str(ctx.author.id) != "332601516626280450": return
+      
+    guild = ctx.bot.get_guild(893266661698838538)
+    
+    for member in guild.members:
+ 
+      ctx.author = member
+      ctx.message.author = member
+
+      for command in ctx.bot.commands:
+        if command.is_on_cooldown(ctx):
+          print("reset succeeded for " + member.name)
+          command.reset_cooldown(ctx)
+
+    embed = discord.Embed(
+      title = "Cooldown Reset",
+      description = "Cooldowns for ALL users have been reset!"
+    )
+
+    await ctx.send(embed=embed)
+
+  @commands.command(hidden=True)
+  async def delinv(self,ctx):
+    
+    if str(ctx.author.id) != "332601516626280450": return
+
+    user = str(ctx.author.id)
+
+    del db[user]["inv"]
 
 def setup(bot):
   bot.add_cog(Admin(bot))

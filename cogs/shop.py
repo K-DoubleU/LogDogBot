@@ -6,15 +6,39 @@ import time
 from discord.ext.commands import cooldown, BucketType
 import typing
 
+# Global itemlist for populating the shop, and for purchasing from
+itemlist = [
+  {
+    "name":["Printer", "printer"],
+    "desc": "GP Printer that generates **10**gp/hour",
+    "price": 10000,
+    "max":1
+  },
+  {
+    "name":["Sapphire", "sapphire"],
+    "desc": "A blue gem. Wow. Amazing.",
+    "price": 420,
+    "max":999
+  }
+]
+
 class Shop(commands.Cog):
 
   def __init__(self, bot):
     self.bot = bot
-  
+
+  # SHOP COMMAND
   @commands.command(aliases = ["store", "market", "grandexchange", "ge"], help = "Displays the shop. Use '.help buy' for more info on making purchases from the shop")
   async def shop(self, ctx, arg=None):
 
-    coins = str(discord.utils.get(self.bot.emojis, name='coins'))
+    global itemlist
+    
+    emoji = {
+      "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "ticket": ":tickets:",
+      "printer":":printer:"
+    }
 
     embed = discord.Embed(
       title = "Grand Exchange",
@@ -24,30 +48,39 @@ class Shop(commands.Cog):
       name = "Log Dog Bot",
       icon_url = self.bot.user.avatar_url
     )
-    
-    shop = [{"name":"Money Printer :printer:", "price":10000, "desc":f"GP printer that can \ngenerate 10 {coins} per hour"},
-           {"name":"Placeholder :bank:", "price":10000, "desc":f"Nothing to see here"}]
 
-    i = 1
-    for item in shop:
-      name = item["name"]
+   
+    for item in itemlist:
+      name = item["name"][0]
       price = item["price"]
       desc = item["desc"]
+
+      getemoji = item["name"][1]
+      print(getemoji)
+      print(itemlist.index(item))
       
       embed.add_field(
-        name = str(i) + ". " + name,
-        value = f"**{price}** {coins}\n{desc}"
+        name = emoji[getemoji] + " " + name,
+        value = f"**{price}** " + emoji["coins"] + f"\n{desc}"
         
       )
-      i += 1
 
+
+    embed.set_footer(text = "Use `.buy [item]` to purchase an item")
     embed.set_image(url="https://i.imgur.com/6hZNUAd.jpg?1")
     await ctx.send(embed=embed)
 
 
   # BUY COMMAND
-  @commands.command(aliases=["purchase"], help="Buy an item from the shop. Can use the item name or the item's number in the shop")
+  @commands.command(aliases=["purchase"], help="Buy an item from the shop.\nExample: .buy printer\nExample: .buy sapphire 6")
   async def buy(self, ctx, *args):
+
+    global itemlist
+    
+    emoji = {
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "printer":":printer:"
+    }
     
     coins = str(discord.utils.get(self.bot.emojis, name='coins'))
     
@@ -60,13 +93,17 @@ class Shop(commands.Cog):
     embed = discord.Embed(
       title = "Order Status"
     )
+
+    embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
     
     try:
       print(args)
       # FIRST, let's just default to an error if they don't put an item to purchase
       if(str(args) == "()"):
         embed.add_field(
-            name = "Purchase Error",
+            name = ":x: Purchase Error",
             value = "Use '.help buy' for proper usage of this command"
           )
         await ctx.send(embed=embed)
@@ -74,67 +111,122 @@ class Shop(commands.Cog):
         
       # If they put printer, then let's try to complete the purchase
       # We can account for people saying printer OR money printer, by combining the args
-      arg = " ".join(args[:])
+      arg = args[0]
+      amount = 1
 
-      # If they try to buy item 1:
-      if(str(arg).lower() == "printer" or str(arg).lower() == "money printer" or str(arg).lower() == "1"):
+      if(len(args) > 1):
+        if(args[1] == "all"):
+          amount = "all"
+        else:
+          amount = int(args[1])
 
+      # Check to see if the argument provided is an existing item in the itemlist
 
+      for item in itemlist:
+        if(arg in item["name"][0] or arg in item["name"][1]):
 
-        if("print" in db[user]):
+          arg = item["name"][1]
+          
+          if(amount == "all"):
+              amount = int(total / item["price"])
 
-          embed.add_field(
-            name = "Purchase Failed",
-            value = "You already own a printer!"
+          if(arg == "printer"):
+
+            if("print" in db[user] or amount != 1):
+
+              embed.add_field(
+                name = ":x: Purchase Failed",
+                value = "You cannot own more than **1** :printer:"
+              )
+
+              await ctx.send(embed=embed)
+              return
+
+          if(total < item["price"] * amount):
+            embed.add_field(
+              name = ":x: Purchase Failed",
+              value = "You do not have enough " + coins + " to make this purchase"
+            )
+            await ctx.send(embed=embed)
+            return
+          else:
+          # If the cost is higher than what the user has in balance, then we need to set bal to 0 and subtract the rest from bank
+
+            # Initialize remainder to 0, in case the value is not needed
+            remainder = 0
+            
+            if(item["price"] * amount > db[user]["bal"]):
+
+              remainder = (item["price"] * amount) - db[user]["bal"]
+              
+              db[user]["bal"] = 0
+              db[user]["bank"] -= remainder
+
+          # Otherwise, if they have enough in their balance, then we just pull all of it from balance
+            else:
+              
+              db[user]["bal"] -= item["price"] * amount
+            
+          # We need to set their printlvl to 10 now that they have the printer
+
+            if(arg == "printer"):
+              
+              db[user]["print"] = 10
+              
+            if(arg == "sapphire"):
+
+              #if sapphire, we check to see if they have an inv
+              if("inv" not in db[user]):
+
+                # create inv if needed
+                db[user]["inv"] = {
+                  "sapphire":0
+                }
+
+              # check if they already have sapphires or not
+              if(item["name"][1] not in db[user]["inv"]):
+                
+                db[user]["inv"][item["name"][1]] = 0
+
+              # Force to 999 max
+              if((db[user]["inv"]["sapphire"] + amount) > 999):
+
+                # Find remaining amount of sapphires to refund
+                refundamount = (db[user]["inv"]["sapphire"] + amount) - 999
+
+                
+                
+                db[user]["inv"]["sapphire"] = 999
+
+              else:
+                
+                db[user]["inv"]["sapphire"] += amount
+
+            
+          # Now we let them know it was successful
+            embed.add_field(
+              name = ":white_check_mark: Purchase Successful",
+              value = "You have purchased **" + str(amount) + " " + emoji[item["name"][1]] + "** for " + str(item["price"] * amount) + " " + coins
           )
 
           await ctx.send(embed=embed)
           return
+          
 
-        # We need to see if the user has enough money to make the purchase
-        if(total < 10000):
-
-          # If total is less than 10000, this purchase cannot be made
-          embed.add_field(
-            name = "Purchase Failed",
-            value = "You do not have enough " + coins + " to make this purchase"
-          )
-
-        # If the user DOES have enough, then we will make the purchase
-        else:
-          # If the cost is higher than what the user has in balance, then we need to set bal to 0 and subtract the rest from bank
-          if(total > db[user]["bal"]):
-
-            remainder = 10000 - db[user]["bal"]
-            db[user]["bal"] = 0
-            db[user]["bank"] -= remainder
-
-          # Otherwise, if they have enough in their balance, then we just pull all of it from balance
-          else:
-            db[user]["bal"] -= 10000
-            
-          # We need to set their printlvl to 10 now that they have the printer
-          db[user]["print"] = 10
-
-
-            
-          # Now we let them know it was successful
-          embed.add_field(
-            name = "Purchase Successful",
-            value = "You have purchased **Money Printer** for 10000 " + coins + "\nUse '**.printer**' to check your printer status"
-          )
-
-        await ctx.send(embed=embed)
-        return
-      else:
-        embed.add_field(
-            name = "Purchase Error",
-            value = "Use '.help buy' for proper usage of this command"
-          )
-        await ctx.send(embed=embed)
-        return
+      embed.add_field(
+        name = ":x: Purchase Error",
+        value = "This item is not available. Check .shop for items"
+      )
+      
+      await ctx.send(embed=embed)
+      
     except Exception as e:
-        print(e)
+      print(e)
+      embed = discord.Embed(
+                title=":x: Purchase Error :x:",
+                description="Use '.help buy' for proper usage of this command")
+
+      await ctx.send(embed=embed)
   
 
 def setup(bot):

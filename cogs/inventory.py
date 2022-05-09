@@ -37,13 +37,15 @@ class Inventory(commands.Cog):
       else:
         db[user]["inv"]["sapphire"] = 1
 
-  
+
+  # Inventory command
   @commands.command(aliases = ["bag", "items", "inv"], help = "Displays your inventory. Use '.help Inventory' for a list of inventory-related commands")
   async def inventory(self, ctx):
 
     emoji = {
       "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
-      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire'))
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "ticket": ":tickets:"
     }
     
     try:
@@ -78,6 +80,9 @@ class Inventory(commands.Cog):
         value = total
       )
       
+      if("sap" in db[user]["inv"].keys()):
+        del db[user]["inv"]["sap"]
+        
       for item, amount in db[user]["inv"].items():
 
         item_name = "Unknown"
@@ -116,6 +121,10 @@ class Inventory(commands.Cog):
       embed = discord.Embed(
         title = "Order Status"
       )
+
+      embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
       
       if("inv" not in db[user]):
         await ctx.send("No inventory to sell from")
@@ -130,11 +139,12 @@ class Inventory(commands.Cog):
         await ctx.send(embed=embed)
         return
       
-      if(len(args) > 1):
-        
+      if(len(args) > 1):      
         arg = str(args[0])
-        amount = int(args[-1])
-        
+        if(args[1] == "all"):
+          amount = "all"
+        else:
+          amount = int(args[1])   
       else:
         
         arg = str(args[0])
@@ -150,7 +160,7 @@ class Inventory(commands.Cog):
           arg = x
       # First, we make sure the item they're trying to sell is actually an item in the list
       if(itemexist):
-
+        
         # Also need to make sure the user has that item, and that amount
         if(arg not in db[user]["inv"]):
           embed.add_field(
@@ -159,6 +169,9 @@ class Inventory(commands.Cog):
           )
           await ctx.send(embed=embed)
           return
+
+        if(amount == "all"):
+          amount = db[user]["inv"][arg]
 
         if(amount > db[user]["inv"][arg]):
           embed.add_field(
@@ -190,6 +203,202 @@ class Inventory(commands.Cog):
         await ctx.send(embed=embed)
         return
 
+      await ctx.send(embed=embed)
+    
+    except Exception as e:
+      print(e)
+
+  # USE COMMAND
+  @commands.command(help = "Use an item in your inventory.\nExample: '.use ticket'")
+  async def use(self, ctx, *args):
+
+    emoji = {
+      "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "ticket": ":tickets:"
+    }
+
+    # Dictionary of usable items
+    itemlist = {
+      "ticket":"All Cooldowns Reset"
+    }
+
+    user = str(ctx.author.id)
+    
+    try:
+
+      embed = discord.Embed(
+        title = ":white_check_mark: Item Used"
+      )
+
+      embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
+      
+      if("inv" not in db[user]):
+        await ctx.send("You do not have any usable items!")
+        return
+
+      # Respond if a item isn't specified by the user
+      if(str(args) == "()"):
+        embed = discord.Embed(
+            title = ":x: Use Error",
+            description = "Use '.help use' for proper usage of this command"
+          )
+        embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+        return
+      
+      if(len(args) > 1):
+        
+        arg = "".join(args[:])
+        print(arg)
+        
+        
+      else:
+        
+        arg = str(args[0])
+        
+      print(arg)
+
+      itemexist = False
+
+      for x in itemlist.keys():
+        if(x in arg):
+          itemexist=True
+          arg = x
+          
+      # First, we make sure the item they're trying to sell is actually an item in the list
+      if(itemexist):
+
+        # Also need to make sure the user has that item
+        if(arg not in db[user]["inv"]):
+          embed = discord.Embed(
+            title = ":x: Use Error",
+            description = "You do not have any " + emoji[arg] + " to use!"
+          )
+          embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
+          await ctx.send(embed=embed)
+          return
+        
+        # If it's gotten past this point, we should be good to use
+        
+        embed.add_field(
+          name = emoji[arg] + " Used Successfully",
+          value = itemlist[arg]
+        )
+
+        db[user]["inv"][arg] -= 1
+
+        if(arg == "ticket"):
+          for command in ctx.bot.commands:
+            print("command found")
+            if(command.is_on_cooldown(ctx) and command.name != "daily"):
+              print("reset succeeded")
+              command.reset_cooldown(ctx)
+
+        if(db[user]["inv"][arg] == 0):
+          print(str(db[user]["inv"][arg]))
+          del db[user]["inv"][arg]
+      else:
+        embed = discord.Embed(
+            title = ":x: Use Error",
+            description = "Use '.help use' for proper usage of this command"
+          )
+        embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+        return
+
+      await ctx.send(embed=embed)
+    
+    except Exception as e:
+      print(e)
+
+  # INFO COMMAND
+  @commands.command(aliases=["view", "information", "details"],help = "View details of an item. Includes sell value and functionality when applicable.\nExample: '.info sapphire'")
+  async def info(self, ctx, *args):
+
+    emoji = {
+      "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "ticket": ":tickets:"
+    }
+
+    # Dictionary of viewable items
+    itemlist = {
+      "ticket" : {
+        "function":"Resets all cooldowns for the users",
+        "price" : 5000
+      },
+      "sapphire" : {
+        "function":"A blue gem. Wow. Amazing.",
+        "price":420
+      }   
+    }
+
+    user = str(ctx.author.id)
+    
+    try:
+
+      embed = discord.Embed(
+        title = ":mag: Item Info"
+      )
+
+      embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
+
+      # Respond if a item isn't specified by the user
+      if(str(args) == "()"):
+        embed = discord.Embed(
+            title = ":x: Info Error",
+            description = "You must specify an item\nUse '.help info' for proper usage of this command"
+          )
+        embed.set_author(name="Log Dog Bot", icon_url=ctx.bot.user.avatar_url)
+        await ctx.send(embed=embed)
+        return
+      
+      if(len(args) > 1):
+        
+        arg = "".join(args[:])
+        print(arg)
+        
+        
+      else:
+        
+        arg = str(args[0])
+        
+      print(arg)
+
+      itemexist = False
+
+      for x in itemlist.keys():
+        if(arg in x):
+          itemexist=True
+          arg = x
+          
+      # First, we make sure the item they're trying to sell is actually an item in the list
+      if(itemexist):
+        
+        # If it's gotten past this point, we should be good to view
+
+        item_details = "**Description:** " + str(itemlist[arg]["function"]) + "\n**Value:** " + str(itemlist[arg]["price"]) + " " + emoji["coins"]
+        
+        embed.add_field(
+          name = emoji[arg],
+          value = item_details
+        )
+      else:
+
+        embed.add_field(
+          name = ":x: Unknown Item",
+          value = arg + " is not a valid item"
+        )
+        
       await ctx.send(embed=embed)
     
     except Exception as e:
