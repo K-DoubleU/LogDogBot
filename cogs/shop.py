@@ -130,6 +130,14 @@ class Shop(commands.Cog):
           if(amount == "all"):
               amount = int(total / item["price"])
 
+          if(total < item["price"] * amount):
+            embed.add_field(
+              name = ":x: Purchase Failed",
+              value = "You do not have enough " + coins + " to make this purchase"
+            )
+            await ctx.send(embed=embed)
+            return
+            
           if(arg == "printer"):
 
             if("print" in db[user] or amount != 1):
@@ -141,72 +149,73 @@ class Shop(commands.Cog):
 
               await ctx.send(embed=embed)
               return
+          if(arg == "sapphire"):
 
-          if(total < item["price"] * amount):
-            embed.add_field(
-              name = ":x: Purchase Failed",
-              value = "You do not have enough " + coins + " to make this purchase"
-            )
-            await ctx.send(embed=embed)
-            return
-          else:
-          # If the cost is higher than what the user has in balance, then we need to set bal to 0 and subtract the rest from bank
+            if("sapphire" in db[user]["inv"]):
+              if(db[user]["inv"]["sapphire"] == 999):
+                embed.add_field(
+                  name = ":x: Purchase Failed",
+                  value = "You cannot own more than **999** " + emoji["sapphire"]
+                )
 
-            # Initialize remainder to 0, in case the value is not needed
-            remainder = 0
-            
-            if(item["price"] * amount > db[user]["bal"]):
-
-              remainder = (item["price"] * amount) - db[user]["bal"]
+                await ctx.send(embed=embed)
+                return
+          # Else, purchase SUCCEEDS
               
-              db[user]["bal"] = 0
-              db[user]["bank"] -= remainder
+          
 
-          # Otherwise, if they have enough in their balance, then we just pull all of it from balance
+          # Initialize remainder to 0, in case the value is not needed
+          remainder = 0
+
+          # We need to set their printlvl to 10 now that they have the printer
+          if(arg == "printer"):
+            
+            db[user]["print"] = 10
+            
+          if(arg == "sapphire"):
+
+            #if sapphire, we check to see if they have an inv
+            if("inv" not in db[user]):
+
+              # create inv if needed
+              db[user]["inv"] = {
+                "sapphire":0
+              }
+
+            # check if they already have sapphires or not
+            if(item["name"][1] not in db[user]["inv"]):
+              
+              db[user]["inv"][item["name"][1]] = 0
+
+            # Force to 999 max
+            if((db[user]["inv"]["sapphire"] + amount) > 999):
+
+              amount = 999 - db[user]["inv"]["sapphire"]
+              
+              db[user]["inv"]["sapphire"] = 999
+
             else:
               
-              db[user]["bal"] -= item["price"] * amount
+              db[user]["inv"]["sapphire"] += amount
+
+          # Money handling done below
+          
+          if(item["price"] * amount > db[user]["bal"]):
+
+            remainder = (item["price"] * amount) - db[user]["bal"]
             
-          # We need to set their printlvl to 10 now that they have the printer
+            db[user]["bal"] = 0
+            db[user]["bank"] -= remainder
 
-            if(arg == "printer"):
-              
-              db[user]["print"] = 10
-              
-            if(arg == "sapphire"):
-
-              #if sapphire, we check to see if they have an inv
-              if("inv" not in db[user]):
-
-                # create inv if needed
-                db[user]["inv"] = {
-                  "sapphire":0
-                }
-
-              # check if they already have sapphires or not
-              if(item["name"][1] not in db[user]["inv"]):
-                
-                db[user]["inv"][item["name"][1]] = 0
-
-              # Force to 999 max
-              if((db[user]["inv"]["sapphire"] + amount) > 999):
-
-                # Find remaining amount of sapphires to refund
-                refundamount = (db[user]["inv"]["sapphire"] + amount) - 999
-
-                
-                
-                db[user]["inv"]["sapphire"] = 999
-
-              else:
-                
-                db[user]["inv"]["sapphire"] += amount
-
+        # Otherwise, if they have enough in their balance, then we just pull all of it from balance
+          else:
             
-          # Now we let them know it was successful
-            embed.add_field(
-              name = ":white_check_mark: Purchase Successful",
-              value = "You have purchased **" + str(amount) + " " + emoji[item["name"][1]] + "** for " + str(item["price"] * amount) + " " + coins
+            db[user]["bal"] -= item["price"] * amount
+          
+        # Now we let them know it was successful
+          embed.add_field(
+            name = ":white_check_mark: Purchase Successful",
+            value = "You have purchased **" + str(amount) + " " + emoji[item["name"][1]] + "** for " + str(item["price"] * amount) + " " + coins
           )
 
           await ctx.send(embed=embed)

@@ -90,40 +90,67 @@ class Misc(commands.Cog):
     prizepool = ["sapphire","ticket"]
 
     # Now to create a list of other rewards that we can loop through for the remaining output
-    rewards = {}
+    rewards = {
+      "sapphire":{"amount":1,"max":999},
+      "ticket":{"amount":1, "max":999}
+    }
 
     if(sap_chance == 1):
-      rewards["sapphire"] = 7
+      rewards["sapphire"]["amount"] = 7
     elif(sap_chance == 2):
-      rewards["sapphire"] = 4
+      rewards["sapphire"]["amount"] = 4
     elif(sap_chance == 3):
-      rewards["sapphire"] = 3
+      rewards["sapphire"]["amount"] = 3
     elif(sap_chance == 4):
-      rewards["sapphire"] = 2
+      rewards["sapphire"]["amount"] = 2
     else:
-      rewards["sapphire"] = 1
+      rewards["sapphire"]["amount"] = 1
 
     if(ticket_chance == 1):
-      rewards["ticket"] = 1
+      rewards["ticket"]["amount"] = 1
     elif(ticket_chance == 2):
-      rewards["ticket"] = 2
+      rewards["ticket"]["amount"] = 2
     else:
-      rewards["ticket"] = 3
+      rewards["ticket"]["amount"] = 3
 
     # Now we have the amount of rewards won, so let's go ahead and loop through rewards and add each item to the output
 
-    for reward in rewards.keys():
-      embed.add_field(
-        name = emoji[reward],
-        value = str(rewards[reward])
-      )
+    for name, reward in rewards.items():
 
       # We need to check if the user has any of this item already existing or not
-      if(reward in db[user]["inv"]):
-        db[user]["inv"][reward] += rewards[reward]
-      else:
-        db[user]["inv"][reward] = rewards[reward]
+      if(name in db[user]["inv"]):
+        
+        print("got here")
+        print("reward: " + name + "\nDetails: " + str(reward))
+              
+        # Need to make sure they won't go over max amount
+        totalquantity = db[user]["inv"][name] + reward["amount"]
+        print(totalquantity)
+        
+        print("problem with doing the addition if this doesnt show")
+        
+        if(totalquantity > reward["max"]):
+          print("also got here")
+          reward["amount"] = reward["max"] - db[user]["inv"][name]
+          
+          print(reward["amount"])
 
+        print("got here wowow")
+        
+        db[user]["inv"][name] += reward["amount"]
+        
+      else:
+        
+        print("somehow got here?")
+        
+        db[user]["inv"][name] = reward["amount"]
+      
+      embed.add_field(
+        name = emoji[name],
+        value = str(reward["amount"])
+      )
+
+    # Add gp to bank
     db[user]["bank"] += prize
     
     await ctx.send(embed=embed)

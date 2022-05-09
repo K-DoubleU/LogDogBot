@@ -684,6 +684,10 @@ class Economy(commands.Cog):
         itemlist = {
           "sapphire":420
         }
+
+        emoji = {
+          "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire'))
+        }
       
         final_leaders = {}
 
@@ -709,7 +713,9 @@ class Economy(commands.Cog):
                 if("inv" in db[user]):
                   if(len(db[user]["inv"]) > 0):
                     for item, price in itemlist.items():
+                      
                       if(item in db[user]["inv"]):
+                        
                         totaltoadd += db[user]["inv"][item] * itemlist[item]
                     
                 total += totaltoadd
@@ -721,9 +727,20 @@ class Economy(commands.Cog):
 
             person = ctx.bot.get_user(int(key))
 
-            embed.add_field(name=person, value=str(value) + " " + coin_emoji)
+            printmsg = str(db[key]["bal"] + db[key]["bank"]) + " " + coin_emoji
+                                   
+            if("inv" in db[key]):
+              
+              if("sapphire" in db[key]["inv"]):
+                
+                printmsg = str(db[key]["bal"] + db[key]["bank"]) + " " + coin_emoji + "\n" + str(db[key]["inv"]["sapphire"]) + " " + emoji["sapphire"]
+                
+            embed.add_field(
+              name=person,
+              value=printmsg
+            )
 
-        embed.set_footer(text="Networth values include the value(s) of the user's gems")
+        embed.set_footer(text="Takes FUCKING FOREVER to load I literally can't fix it I'm sorry, eat my ass")
 
         await ctx.send(embed=embed)
 
