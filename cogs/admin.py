@@ -34,6 +34,27 @@ class Admin(commands.Cog):
     if("gamba" in message.content.lower()):
       await message.add_reaction(gamba)
 
+  @commands.command(hidden=True)
+  async def purge(self, ctx, arg = 1):
+
+    allowedroles = [
+      discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Board', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Bot Dev', ctx.message.guild.roles)
+    ]
+
+    allowed = False
+    
+    for role in ctx.author.roles:
+      if(role in allowedroles):
+        allowed = True
+
+    if(allowed == False):
+      await ctx.send("You do not have the required role(s) to use this command. Fuck off.")
+      return
+
+    await ctx.channel.purge(limit=arg)
+
   # DEV LOG COMMAND
   @commands.command(hidden=True)
   async def devlog(self, ctx):
@@ -185,6 +206,8 @@ class Admin(commands.Cog):
     
       person = ctx.bot.get_user(int(winner.id))
 
+      await msg.delete()
+      
       winembed = discord.Embed(
         title = "🎉 Drop Party Ended! 🎉",
         description = "The winner is... :drum:"

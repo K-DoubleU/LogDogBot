@@ -49,7 +49,11 @@ class Economy(commands.Cog):
         help="Displays the user's balance, or the balance of a mentioned user")
     async def balance(self, ctx, member: discord.Member = None):
 
+        
         coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
+      
+        sapphire = str(discord.utils.get(self.bot.emojis, name='sapphire'))
+      
         user = str(ctx.author.id)
 
         allowed_channels = [972259001062526976,
@@ -71,8 +75,7 @@ class Economy(commands.Cog):
 
                 user = str(member.id)
 
-                embed = discord.Embed(title=str(member.name) + "#" +
-                                      str(member.discriminator))
+                embed = discord.Embed(title=":bank: Log Dog Banking")
 
                 embed.add_field(name="Balance",
                                 value=str(db[user]["bal"]) + " " + coin_emoji)
@@ -81,8 +84,17 @@ class Economy(commands.Cog):
                                 value=str(db[user]["bank"]) + " " + coin_emoji,
                                 inline=False)
               
+                # Check for sapphires
+                if("inv" in db[user]):
+                  if("sapphire" in db[user]["inv"]):
+
+                    sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420))
+                  
+                else:
+                  sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji
+                  
                 embed.add_field(name="Networth",
-                                value=str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji,
+                                value=sendmsg,
                                 inline=False)
 
                 embed.set_author(name=member.display_name,
@@ -92,8 +104,7 @@ class Economy(commands.Cog):
           
             user = str(ctx.author.id)
 
-            embed = discord.Embed(title=str(ctx.author.name) + "#" +
-                                  str(ctx.author.discriminator))
+            embed = discord.Embed(title=":bank: Log Dog Banking")
 
             embed.add_field(name="Balance",
                             value=str(db[user]["bal"]) + " " + coin_emoji)
@@ -101,9 +112,21 @@ class Economy(commands.Cog):
             embed.add_field(name="Bank",
                             value=str(db[user]["bank"]) + " " + coin_emoji,
                             inline=False)
+
+            # Check for sapphires
+            if("inv" in db[user]):
+              if("sapphire" in db[user]["inv"]):
+
+                sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420))
+              
+              else:
+                sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji
+            else:
+              sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji
+              
             embed.add_field(name="Networth",
-                                value=str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji,
-                                inline=False)
+                            value=sendmsg,
+                            inline=False)
 
             embed.set_author(name=ctx.author.display_name,
                              icon_url=ctx.author.avatar_url)
@@ -504,7 +527,7 @@ class Economy(commands.Cog):
 
         user = str(ctx.author.id)
 
-        embed = discord.Embed(title="Log Dog Banking")
+        embed = discord.Embed(title=":bank: Log Dog Banking")
 
         # First, checks to see if the user provided an argument
         # If not, we default to it being 0
@@ -605,7 +628,9 @@ class Economy(commands.Cog):
         coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
 
         # Begin embed construction
-        embed = discord.Embed(title="Log Dog Banking")
+        embed = discord.Embed(title=":bank: Log Dog Banking")
+        embed.set_author(name=ctx.author.display_name,
+                             icon_url=ctx.author.avatar_url)
 
         try:
 
@@ -613,7 +638,7 @@ class Economy(commands.Cog):
               amount = db[user]["bank"]
               if(amount == 0):
                 embed.add_field(
-                  name = "Withdraw Error",
+                  name = ":x: Withdraw Error",
                   value = "You don't have any " + coin_emoji + " to withdraw!"
                 )
                 await ctx.send(embed=embed)
@@ -622,8 +647,8 @@ class Economy(commands.Cog):
                 db[user]["bal"] += db[user]["bank"]
                 db[user]["bank"] = 0
 
-                embed.add_field(name="Withdraw Success",
-                                value="You have withdrawn " + str(amount) + " " +
+                embed.add_field(name=":white_check_mark: Withdraw Success",
+                                value="Withdrawn: **" + str(amount) + "** " +
                                 coin_emoji)
 
                 await ctx.send(embed=embed)
@@ -632,10 +657,10 @@ class Economy(commands.Cog):
             # If they try to withdraw more than is in their bank, don't allow it
             if int(arg) not in range(1, int(db[user]["bank"]) + 1):
 
-                embed.add_field(name=":x: Withdraw Error :x:",
+                embed.add_field(name=":x: Withdraw Error",
                                 value="Unable to withdraw " + str(arg) + " " +
                                 coin_emoji)
-                embed.add_field(name="Your bank balance:",
+                embed.add_field(name="**Bank:**",
                                 value=str(db[user]["bank"]) + " " + coin_emoji,
                                inline = False)
 
@@ -656,10 +681,11 @@ class Economy(commands.Cog):
                 db[user]["bal"] += int(arg)
                 db[user]["bank"] -= int(arg)
 
-                embed.add_field(name="Withdraw Success",
-                                value="You have withdrawn " + str(arg) + " " + 
+                embed.add_field(name=":white_check_mark: Withdraw Success",
+                                value="Withdrawn: **" + str(arg) + "** " + 
                                 coin_emoji)
 
+                
                 await ctx.send(embed=embed)
 
         except Exception as e:
@@ -926,7 +952,7 @@ class Economy(commands.Cog):
         icon_url=ctx.author.avatar_url)
 
       try:
-        if(db[user]["print"] < 10):
+        if(db[user]["print"] < 100):
 
           embed.add_field(
             name = "No Printer Active",

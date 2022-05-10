@@ -10,7 +10,7 @@ import typing
 itemlist = [
   {
     "name":["Printer", "printer"],
-    "desc": "GP Printer that generates **10**gp/hour",
+    "desc": "GP Printer that generates **100**gp/hour",
     "price": 10000,
     "max":1
   },
@@ -19,6 +19,12 @@ itemlist = [
     "desc": "A blue gem. Wow. Amazing.",
     "price": 420,
     "max":999
+  },
+  {
+    "name":["Fridge", "minion"],
+    "desc": "A basic fridge minion. Can be sent on quests for loot.",
+    "price": 420000,
+    "max":1
   }
 ]
 
@@ -36,6 +42,7 @@ class Shop(commands.Cog):
     emoji = {
       "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "minion" : str(discord.utils.get(self.bot.emojis, name='Fridge')),
       "ticket": ":tickets:",
       "printer":":printer:"
     }
@@ -79,6 +86,7 @@ class Shop(commands.Cog):
     
     emoji = {
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "minion" : str(discord.utils.get(self.bot.emojis, name='Fridge')),
       "printer":":printer:"
     }
     
@@ -123,7 +131,7 @@ class Shop(commands.Cog):
       # Check to see if the argument provided is an existing item in the itemlist
 
       for item in itemlist:
-        if(arg in item["name"][0] or arg in item["name"][1]):
+        if(arg.lower() in item["name"][0].lower() or arg in item["name"][1].lower()):
 
           arg = item["name"][1]
           
@@ -149,6 +157,19 @@ class Shop(commands.Cog):
 
               await ctx.send(embed=embed)
               return
+
+          if(arg == "minion"):
+            
+            if("minion" in db[user] or amount != 1):
+
+              embed.add_field(
+                name = ":x: Purchase Failed",
+                value = "You cannot own more than **1** " + emoji["minion"]
+              )
+
+              await ctx.send(embed=embed)
+              return
+              
           if(arg == "sapphire"):
 
             if("sapphire" in db[user]["inv"]):
@@ -160,18 +181,18 @@ class Shop(commands.Cog):
 
                 await ctx.send(embed=embed)
                 return
+                
           # Else, purchase SUCCEEDS
-              
-          
 
           # Initialize remainder to 0, in case the value is not needed
           remainder = 0
 
-          # We need to set their printlvl to 10 now that they have the printer
+          # We need to set their printlvl to 100 now that they have the printer
           if(arg == "printer"):
             
-            db[user]["print"] = 10
-            
+            db[user]["print"] = 100
+
+          # If they buy sapphire(s)
           if(arg == "sapphire"):
 
             #if sapphire, we check to see if they have an inv
@@ -198,6 +219,11 @@ class Shop(commands.Cog):
               
               db[user]["inv"]["sapphire"] += amount
 
+          # If they buy a minion...
+          if(arg == "minion"):
+
+            db[user]["minion"] = 1
+            
           # Money handling done below
           
           if(item["price"] * amount > db[user]["bal"]):

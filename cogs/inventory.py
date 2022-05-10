@@ -44,7 +44,9 @@ class Inventory(commands.Cog):
 
     emoji = {
       "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
+      "coins5" : str(discord.utils.get(self.bot.emojis, name='coins5')),
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "minion" : str(discord.utils.get(self.bot.emojis, name='Fridge')),
       "ticket": ":tickets:"
     }
     
@@ -72,6 +74,11 @@ class Inventory(commands.Cog):
       embed = discord.Embed(
         title = author + "'s Inventory"
       )
+      embed.set_author(
+            name = ctx.author.display_name,
+            icon_url=ctx.author.avatar_url)
+
+      embed.set_thumbnail(url="https://i.imgur.com/wMQYUZ5.png")
 
       total = db[user]["bal"] + db[user]["bank"]
 
@@ -95,6 +102,23 @@ class Inventory(commands.Cog):
           value = amount
         )
 
+      if("print" in db[user]):
+
+        embed.add_field(
+          name = "Printer:",
+          value = ":printer:  " + str(db[user]["print"]) + " " + emoji["coins5"] + "/hr.",
+          inline = False
+        )
+        
+      if("minion" in db[user]):
+
+        embed.add_field(
+          name = "Minion:",
+          value = emoji["minion"] + "  Lvl " + str(db[user]["minion"])
+        )
+
+      
+      
       await ctx.send(embed=embed)
         
     
@@ -297,7 +321,8 @@ class Inventory(commands.Cog):
         if(arg == "ticket"):
           for command in ctx.bot.commands:
             print("command found")
-            if(command.is_on_cooldown(ctx) and command.name != "daily"):
+            banned_cmds = ["daily", "quest"]
+            if(command.is_on_cooldown(ctx) and command.name not in banned_cmds):
               print("reset succeeded")
               command.reset_cooldown(ctx)
 
@@ -327,19 +352,36 @@ class Inventory(commands.Cog):
     emoji = {
       "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
-      "ticket": ":tickets:"
+      "ticket": ":tickets:",
+      "fridge": str(discord.utils.get(self.bot.emojis, name='Fridge')),
+      "printer": ":printer:"
+    }
+
+    thumbnails = {
+      "sapphire" : "https://i.imgur.com/kzH7sGv.png",
+      "fridge" : "https://i.imgur.com/vDgZeTY.png",
+      "printer" : "https://i.imgur.com/lU1suPR.png",
+      "ticket" : "https://i.imgur.com/eFX2Z6h.png"
     }
 
     # Dictionary of viewable items
     itemlist = {
       "ticket" : {
         "function":"Resets all cooldowns for the users",
-        "price" : 5000
+        "price" : 0
       },
       "sapphire" : {
         "function":"A blue gem. Wow. Amazing.",
         "price":420
-      }   
+      },
+      "fridge" : {
+        "function":"A basic fridge minion. Can be sent on quests for loot.",
+        "price":420000
+      },
+      "printer" : {
+        "function" : "GP Printer that generates 100 gp per hour.",
+        "price":10000
+      }
     }
 
     user = str(ctx.author.id)
@@ -386,19 +428,24 @@ class Inventory(commands.Cog):
         
         # If it's gotten past this point, we should be good to view
 
-        item_details = "**Description:** " + str(itemlist[arg]["function"]) + "\n**Value:** " + str(itemlist[arg]["price"]) + " " + emoji["coins"]
+        item_details = "**Description:** " + str(itemlist[arg]["function"]) + "\n**Price:** " + str(itemlist[arg]["price"]) + " " + emoji["coins"]
         
         embed.add_field(
           name = emoji[arg],
           value = item_details
         )
+
+        embed.set_thumbnail(
+          url = thumbnails[arg]
+        )
+        
       else:
 
         embed.add_field(
           name = ":x: Unknown Item",
           value = arg + " is not a valid item"
         )
-        
+
       await ctx.send(embed=embed)
     
     except Exception as e:

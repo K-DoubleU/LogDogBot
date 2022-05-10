@@ -13,7 +13,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=".",intents=discord.Intents.all())
 
-cogs = ["cogs.members", "cogs.lvnd", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc"]
+cogs = ["cogs.members", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc", "cogs.minion"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.
@@ -40,9 +40,12 @@ async def hourly_gp():
         
           # Grabs the printlvl of the user, and only increases their bal based on the printlvl
 
-        if(db[user]["print"] == 10): 
-          db[user]["bal"] += 10
+        if(db[user]["print"] == 100): 
+          db[user]["bal"] += 100
           print(user + " increased by " + str(db[user]["print"]))
+        if(db[user]["print"] == 10): 
+          db[user]["print"] = 100
+          print(user + " adjusted printer to " + str(db[user]["print"]))
       
       
 @bot.command(hidden=True)
@@ -55,7 +58,7 @@ async def cooldowns(ctx):
   cooldown_string = ""
 
   embed = discord.Embed(
-    title = str(ctx.author) + "'s Cooldowns"
+    title = ":timer: " + str(ctx.author.name) + "'s Cooldowns"
   )
   
   for command in bot.commands:
