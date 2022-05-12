@@ -273,7 +273,7 @@ class Members(commands.Cog):
   
   def __init__(self, bot):
     self.bot = bot
-
+    
   @commands.Cog.listener()
   async def on_message(self, message):
 
@@ -283,20 +283,125 @@ class Members(commands.Cog):
     if message.channel.id == 974088082401943562:
       await message.delete()
 
-  @commands.command(hidden = True)
-  async def removeclan(self, ctx, member: discord.Member):
+  # REMOVE CLAN COMMAND
+  @commands.command(help = "Removes clan information from a specified user. You can either mention the user or type their IGN.\nExample: .removeclan @FridgeBot\nExample: .removeclan xTreeChopper69x")
+  async def removeclan(self, ctx, *args):
 
-    if(ctx.author.id != 332601516626280450): return
+    allowedroles = [
+      discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Board', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Staff', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Bot Dev', ctx.message.guild.roles)
+    ]
 
-    user = str(member.id)
+    allowed = False
+    
+    for role in ctx.author.roles:
+      if(role in allowedroles):
+        allowed = True
 
-    if(user in db):
-      if("clan" in db[user]):
-        del db[user]["clan"]
+    if(allowed == False):
+      await ctx.send("You do not have the required role(s) to use this command. Fuck off.")
+      return
 
-    await ctx.send("Executed. Check db")
+    embed = discord.Embed(
+      title = "Clan Removal",
+      description = "React with :white_check_mark: to confirm"
+    )
+    
+    try:
 
-    print("executed")
+      userfound = False
+      
+      if ("@" in args):
+
+        arg = args[0]
+        
+        to_remove = arg[2:17]
+  
+        if(to_remove in db):
+          
+          if("clan" in db[to_remove]):
+
+            userfound = True
+            
+            embed.add_field(
+              name = "Removing:",
+              value = "IGN: " + db[to_remove]["clan"]["ign"]
+            )
+
+      else:
+
+        arg = " ".join(args[:])
+        
+        for user in db:
+
+          if("clan" in db[user]):
+
+            if(db[user]["clan"]["ign"] == arg):
+
+              to_remove = user
+
+              userfound = True
+              
+              embed.add_field(
+                name = "Removing:",
+                value = "IGN: " + db[user]["clan"]["ign"]
+              )
+
+      if(userfound):
+
+        msg = await ctx.send(embed=embed)
+
+      else:
+
+        embed = discord.Embed(
+          title = ":x: User Not Found"
+        )
+
+        await ctx.send(embed=embed)
+        return
+
+      await msg.add_reaction("✅")
+
+      def check(reaction, person):
+        
+        return person == ctx.author and str(reaction.emoji) == '✅'
+
+      try:
+        
+        reaction, person = await ctx.bot.wait_for('reaction_add', timeout=60.0, check=check)
+        
+      except asyncio.TimeoutError:
+        
+        print("timed out")
+
+      else:
+
+        del db[to_remove]["clan"]
+
+        doneembed = discord.Embed(
+          title = ":white_check_mark: Clan Member Removed"
+        )
+
+        await ctx.send(embed=doneembed)
+        
+      
+
+    except Exception as e:
+
+      print("ERROR HANDLING HERE\n" + str(e))
+      
+
+  @removeclan.error
+  async def removeclan_error(self, ctx, error): 
+    if isinstance(error, commands.BadArgument):
+      
+      await ctx.send('I could not find that user')
+
+    else:
+      print(error)
+
 
   @commands.command(help = "Sets an in-game name for a specified discord user. \nExample: '.setign @FridgeBot xTreeChopper69x'")
   async def setign(self, ctx, member: discord.Member, *args):
@@ -304,6 +409,7 @@ class Members(commands.Cog):
     allowedroles = [
       discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles),
       discord.utils.find(lambda r: r.name == 'Board', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Staff', ctx.message.guild.roles),
       discord.utils.find(lambda r: r.name == 'Bot Dev', ctx.message.guild.roles)
     ]
 
@@ -368,6 +474,7 @@ class Members(commands.Cog):
     allowedroles = [
       discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles),
       discord.utils.find(lambda r: r.name == 'Board', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Staff', ctx.message.guild.roles),
       discord.utils.find(lambda r: r.name == 'Bot Dev', ctx.message.guild.roles)
     ]
 
@@ -522,6 +629,11 @@ class Members(commands.Cog):
         await ctx.send("User not found to update rank")
         return
 
+      if("clan" not in db[user]):
+
+        await ctx.send("This user is not in the clan!")
+        return
+        
       start_date = db[user]["clan"]["start"]
 
       datestart = start_date.replace("-", " ")
@@ -579,7 +691,7 @@ class Members(commands.Cog):
 
       roleadded = get(ctx.guild.roles, id = roleid)
       
-      await ctx.send("Joined: " + start_date + "\nTime since joining: " + str(months) + " months\n" + "Role added: " + str(roleadded))
+      await ctx.send("IGN: " + db[user]["clan"]["ign"] + "\nJoined: " + start_date + "\nTime since joining: " + str(months) + " months\n" + "Role added: " + str(roleadded))
         
     else:
 

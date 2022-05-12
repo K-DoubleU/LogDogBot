@@ -637,15 +637,24 @@ class Economy(commands.Cog):
         try:
 
             if(arg == "all"):
+              
               amount = db[user]["bank"]
+              
               if(amount == 0):
+                
                 embed.add_field(
                   name = ":x: Withdraw Error",
                   value = "You don't have any " + coin_emoji + " to withdraw!"
                 )
+                
                 await ctx.send(embed=embed)
+                
                 return
+                
               else:
+
+                amount = db[user]["bank"]
+                
                 db[user]["bal"] += db[user]["bank"]
                 db[user]["bank"] = 0
 
@@ -654,13 +663,15 @@ class Economy(commands.Cog):
                                 coin_emoji)
 
                 await ctx.send(embed=embed)
+                
                 return
           
             # If they try to withdraw more than is in their bank, don't allow it
             if int(arg) not in range(1, int(db[user]["bank"]) + 1):
 
+
                 embed.add_field(name=":x: Withdraw Error",
-                                value="Unable to withdraw " + str(numformat(arg)) + " " +
+                                value="Unable to withdraw " + str(numformat(int(arg))) + " " +
                                 coin_emoji)
                 embed.add_field(name="**Bank:**",
                                 value=str(numformat(db[user]["bank"])) + " " + coin_emoji,
@@ -684,7 +695,7 @@ class Economy(commands.Cog):
                 db[user]["bank"] -= int(arg)
 
                 embed.add_field(name=":white_check_mark: Withdraw Success",
-                                value="Withdrawn: **" + str(numformat(arg)) + "** " + 
+                                value="Withdrawn: **" + str(numformat(int(arg))) + "** " + 
                                 coin_emoji)
 
                 
@@ -758,7 +769,7 @@ class Economy(commands.Cog):
                     for item in itemlist:
                       
                       if(item in db[user]["inv"]):
-                        
+                          
                         totaltoadd += db[user]["inv"][item] * itemlist[item]
                     
                 total += totaltoadd
@@ -777,8 +788,9 @@ class Economy(commands.Cog):
               for item in itemlist:
                 
                 if(item in db[key]["inv"]):
-                
-                  printmsg += "\n" + str(db[key]["inv"][item]) + " " + emoji[item]
+
+                  if(db[key]["inv"][item] != 0):
+                    printmsg += "\n" + str(db[key]["inv"][item]) + " " + emoji[item]
                 
             embed.add_field(
               name=person,

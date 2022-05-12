@@ -6,6 +6,7 @@ from keep_alive import keep_alive
 from discord.ext import commands
 from discord.ext import tasks
 from replit import db
+from discord.utils import get
 
 
 intents = discord.Intents.default()
@@ -13,7 +14,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=".",intents=discord.Intents.all())
 
-cogs = ["cogs.members", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc", "cogs.minion"]
+cogs = ["cogs.members", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc", "cogs.minion", "cogs.pvp"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.
@@ -31,6 +32,17 @@ async def on_ready():
 # If an error occurs with trying to load a cog, print the error to the console
         except Exception as e:
             print(e)
+
+@bot.event
+async def on_member_join(member):
+
+    person = str(member.id)
+    logdoggerid = 893277099350163518
+    logdoggerrole = get(member.guild.roles, id = logdoggerid)
+    
+    if(person in db):
+      if("clan" in db[person]):
+        await member.add_roles(logdoggerrole)
 
 
 @tasks.loop(seconds=3600)
@@ -51,6 +63,8 @@ async def hourly_gp():
 @bot.command(hidden=True)
 async def ping(ctx):
     await ctx.send(f"Bot latency: {round(bot.latency * 1000)}ms")
+
+
 
 
 @bot.command(pass_content=True, aliases = ["cd", "cooldown"], help="Displays all current cooldowns for the user")

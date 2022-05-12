@@ -398,7 +398,7 @@ class Inventory(commands.Cog):
         "price":10000
       },
       "ruby" : {
-        "function" : "A red gem. Wow. Amazing. Even more amazing than sapphires.",
+        "function" : "A red gem. Wow. Amazing. \nObtained from quests.",
         "price":1000
       }
     }
