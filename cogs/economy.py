@@ -6,6 +6,14 @@ import time
 from discord.ext.commands import cooldown, BucketType
 import typing
 
+def numformat(num):
+      num = float('{:.3g}'.format(num))
+      magnitude = 0
+      while abs(num) >= 1000:
+          magnitude += 1
+          num /= 1000.0
+      return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+  
 class Economy(commands.Cog):
   
     def __init__(self, bot):
@@ -78,27 +86,29 @@ class Economy(commands.Cog):
                 embed = discord.Embed(title=":bank: Log Dog Banking")
 
                 embed.add_field(name="Balance",
-                                value=str(db[user]["bal"]) + " " + coin_emoji)
-
+                                value=str(numformat(db[user]["bal"])) + " " + coin_emoji)
+    
                 embed.add_field(name="Bank",
-                                value=str(db[user]["bank"]) + " " + coin_emoji,
+                                value=str(numformat(db[user]["bank"])) + " " + coin_emoji,
                                 inline=False)
-              
+    
                 # Check for sapphires
                 if("inv" in db[user]):
                   if("sapphire" in db[user]["inv"]):
-
-                    sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420))
+    
+                    sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(numformat(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420)))
                   
+                  else:
+                    sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
                 else:
-                  sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji
+                  sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
                   
                 embed.add_field(name="Networth",
                                 value=sendmsg,
                                 inline=False)
-
-                embed.set_author(name=member.display_name,
-                                 icon_url=member.avatar_url)
+    
+                embed.set_author(name=ctx.author.display_name,
+                                 icon_url=ctx.author.avatar_url)
 
         else:
           
@@ -107,22 +117,22 @@ class Economy(commands.Cog):
             embed = discord.Embed(title=":bank: Log Dog Banking")
 
             embed.add_field(name="Balance",
-                            value=str(db[user]["bal"]) + " " + coin_emoji)
+                            value=str(numformat(db[user]["bal"])) + " " + coin_emoji)
 
             embed.add_field(name="Bank",
-                            value=str(db[user]["bank"]) + " " + coin_emoji,
+                            value=str(numformat(db[user]["bank"])) + " " + coin_emoji,
                             inline=False)
 
             # Check for sapphires
             if("inv" in db[user]):
               if("sapphire" in db[user]["inv"]):
 
-                sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420))
+                sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(numformat(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420)))
               
               else:
-                sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji
+                sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
             else:
-              sendmsg = str(db[user]["bank"] + db[user]["bal"]) + " " + coin_emoji
+              sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
               
             embed.add_field(name="Networth",
                             value=sendmsg,
@@ -284,13 +294,13 @@ class Economy(commands.Cog):
 
                   embed.add_field(
                       name = ":partying_face: You WON the coinflip!",
-                      value = f"You earned: **+{amount}** " + coin_emoji)
+                      value = f"You earned: **+{numformat(amount)}** " + coin_emoji)
               else:
                   db[user]["bal"] -= amount
 
                   embed.add_field(
                       name = ":sob: You LOST the coinflip...",
-                      value = f"You lost: **-{amount}** " + coin_emoji)
+                      value = f"You lost: **-{numformat(amount)}** " + coin_emoji)
 
           embed.set_author(
             name = ctx.author.display_name,
@@ -303,6 +313,7 @@ class Economy(commands.Cog):
               name = ":x: Coinflip Error :x:",
               value = "Use '.help coinflip' for proper usage of this command")
           await ctx.send(embed=embed)
+          print(e)
           
       
     # ROB COMMAND
@@ -365,7 +376,7 @@ class Economy(commands.Cog):
 
             embed = discord.Embed(
               title = ":white_check_mark: Robbery Successful",
-              description = f"You robbed {robbed}\nYou stole: **" + str(steal) + "** " + coin_emoji)
+              description = f"You robbed {robbed}\nYou stole: **" + str(numformat(steal)) + "** " + coin_emoji)
             
             embed.set_author(
               name = ctx.author.display_name,
@@ -378,9 +389,12 @@ class Economy(commands.Cog):
             if(chance == 1):
               caught = True
 
+            if(db[user]["bal"] < 250):
+              caught = False
+
             if(caught == True):
               # Generates the amount fined if caught
-              fine = random.randint(25, 150)
+              fine = random.randint(25, int(db[user]["bal"]/10))
 
               # Here we grab the author's balance and bank entries
               user = str(ctx.author.id)
@@ -409,7 +423,7 @@ class Economy(commands.Cog):
               # Build embed for failure
               embed = discord.Embed(
                 title = ":x: Robbery Failed",
-                description = "You were caught trying to rob " + str(member.name) + ", and were fined " + str(fine) + " " + coin_emoji
+                description = "You were caught trying to rob " + str(member.name) + ", and were fined: **" + str(numformat(fine)) + "** " + coin_emoji
                 )
               embed.set_author(
                 name = ctx.author.display_name,
@@ -474,12 +488,6 @@ class Economy(commands.Cog):
     # SET COMMAND
     @commands.command(hidden=True)
     async def set(self, ctx, member: discord.Member, arg):
-
-        allowed_channels = [972259001062526976,
-                         971845967483658260]
-        if ctx.channel.id not in allowed_channels:
-          await ctx.send("Wrong channel, dumbass")
-          return
           
         user = str(member.id)
 
@@ -491,12 +499,6 @@ class Economy(commands.Cog):
 
     @commands.command(hidden=True)
     async def setbank(self, ctx, member: discord.Member, arg):
-
-        allowed_channels = [972259001062526976,
-                         971845967483658260]
-        if ctx.channel.id not in allowed_channels:
-          await ctx.send("Wrong channel, dumbass")
-          return
           
         user = str(member.id)
 
@@ -545,7 +547,7 @@ class Economy(commands.Cog):
             # If the user enters more money than is in their balance, return an error and exit the command
             if (amount > db[user]["bal"]):
                 embed.add_field(name=":x: Unable to Deposit",
-                                value="You don't have " + str(amount) +
+                                value="You don't have " + str(numformat(amount)) +
                                 coin_emoji + " to deposit!")
                 await ctx.send(embed=embed)
                 ctx.command.reset_cooldown(ctx)
@@ -578,8 +580,8 @@ class Economy(commands.Cog):
 
             embed.add_field(
                 name=":white_check_mark: Deposit Successful",
-                value="Deposited: **" + str(amount) + "** " + coin_emoji +
-                "\n\nBank: **" + str(db[user]["bank"]) + "** " + 
+                value="Deposited: **" + str(numformat(amount)) + "** " + coin_emoji +
+                "\n\nBank: **" + str(numformat(db[user]["bank"])) + "** " + 
                 coin_emoji)
 
             embed.set_author(name=ctx.author.display_name,
@@ -648,7 +650,7 @@ class Economy(commands.Cog):
                 db[user]["bank"] = 0
 
                 embed.add_field(name=":white_check_mark: Withdraw Success",
-                                value="Withdrawn: **" + str(amount) + "** " +
+                                value="Withdrawn: **" + str(numformat(amount)) + "** " +
                                 coin_emoji)
 
                 await ctx.send(embed=embed)
@@ -658,10 +660,10 @@ class Economy(commands.Cog):
             if int(arg) not in range(1, int(db[user]["bank"]) + 1):
 
                 embed.add_field(name=":x: Withdraw Error",
-                                value="Unable to withdraw " + str(arg) + " " +
+                                value="Unable to withdraw " + str(numformat(arg)) + " " +
                                 coin_emoji)
                 embed.add_field(name="**Bank:**",
-                                value=str(db[user]["bank"]) + " " + coin_emoji,
+                                value=str(numformat(db[user]["bank"])) + " " + coin_emoji,
                                inline = False)
 
                 await ctx.send(embed=embed)
@@ -682,7 +684,7 @@ class Economy(commands.Cog):
                 db[user]["bank"] -= int(arg)
 
                 embed.add_field(name=":white_check_mark: Withdraw Success",
-                                value="Withdrawn: **" + str(arg) + "** " + 
+                                value="Withdrawn: **" + str(numformat(arg)) + "** " + 
                                 coin_emoji)
 
                 
@@ -708,11 +710,13 @@ class Economy(commands.Cog):
             return
 
         itemlist = {
-          "sapphire":420
+          "sapphire": 420,
+          "ruby": 1000
         }
 
         emoji = {
-          "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire'))
+          "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+          "ruby" : str(discord.utils.get(self.bot.emojis, name='ruby'))
         }
       
         final_leaders = {}
@@ -727,18 +731,31 @@ class Economy(commands.Cog):
 
             total = 0
 
+            member = ctx.guild.get_member(int(user))
+
+            if(member is None): continue
+
+            if("bal" not in db[user]): 
+              
+                continue
+
             # Only looks for keys that denote balance values
-            if ("bal" in db[user]):
+            else:
 
                 total += db[user]["bal"]
 
                 total += db[user]["bank"]
 
+                if total == 0: continue
+
                 # If the user has an inventory, then check if they have items, and add the item values to their networth
                 totaltoadd = 0
+              
                 if("inv" in db[user]):
+                  
                   if(len(db[user]["inv"]) > 0):
-                    for item, price in itemlist.items():
+                    
+                    for item in itemlist:
                       
                       if(item in db[user]["inv"]):
                         
@@ -753,13 +770,15 @@ class Economy(commands.Cog):
 
             person = ctx.bot.get_user(int(key))
 
-            printmsg = str(db[key]["bal"] + db[key]["bank"]) + " " + coin_emoji
+            printmsg = str(numformat(db[key]["bal"] + db[key]["bank"])) + " " + coin_emoji
                                    
             if("inv" in db[key]):
-              
-              if("sapphire" in db[key]["inv"]):
+
+              for item in itemlist:
                 
-                printmsg = str(db[key]["bal"] + db[key]["bank"]) + " " + coin_emoji + "\n" + str(db[key]["inv"]["sapphire"]) + " " + emoji["sapphire"]
+                if(item in db[key]["inv"]):
+                
+                  printmsg += "\n" + str(db[key]["inv"][item]) + " " + emoji[item]
                 
             embed.add_field(
               name=person,
@@ -785,12 +804,27 @@ class Economy(commands.Cog):
           return
         
       coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
+      user = str(ctx.author.id)
       
       try:
         
         chance = random.randint(1,10)
-          
+
+        if("thieving" not in db[user]):
+          embed = discord.Embed(
+            title = ":x: Thieving Required",
+            description = "Unlock thieving in the Grand Exchange"
+          )
+
+          await ctx.send(embed=embed)
+          ctx.command.reset_cooldown(ctx)
+          return
+        
         if member:
+
+          embed = discord.Embed(
+            title = "Bank Robbery"
+          )
           
           user = str(member.id)
           robbed = str(member.name)
@@ -800,10 +834,10 @@ class Economy(commands.Cog):
               ctx.command.reset_cooldown(ctx)
               return
 
-          if(db[user]["bank"] == 0):
-              embed = discord.Embed(
-                title=":x: Bank Robbery Error :x:",
-                description=f"There is no {coin_emoji} in {robbed}'s bank!")
+          if(db[user]["bank"]+db[user]["bal"] < 10000):
+              embed.add_field(
+                name=":x: Error",
+                value=f"You cannot rob a user with less than **10K** " + coin_emoji)
             
               embed.set_author(
                 name = ctx.author.display_name,
@@ -825,7 +859,9 @@ class Economy(commands.Cog):
             db[user]["bank"] -= steal
             db[winner]["bal"] += steal
 
-            embed = discord.Embed(title=f"You robbed {robbed}'s bank, and took " + str(steal) + " " + coin_emoji)
+            embed.add_field(
+              name= ":white_check_mark: Success",
+              value= f"You robbed {robbed}'s bank, and stole: **" + str(numformat(steal)) + "** " + coin_emoji)
             embed.set_author(
                 name = ctx.author.display_name,
                 icon_url=ctx.author.avatar_url)
@@ -833,12 +869,16 @@ class Economy(commands.Cog):
           else:
 
             caught = False
+            
             if(chance >= 7):
               caught = True
 
+            if(db[user]["bank"] < 1000):
+              caught = False
+
             if(caught):
               # Generates the amount fined if caught
-              fine = random.randint(50, 400)
+              fine = random.randint(100, int(db[user]["bal"]/10))
 
               # Here we grab the author's balance and bank entries
               user = str(ctx.author.id)
@@ -867,7 +907,7 @@ class Economy(commands.Cog):
             # Build embed for failure
               embed = discord.Embed(
                 title = ":x: Bank Robbery Failed",
-                description = "You were caught trying to rob " + str(member.name) + "'s bank, and were fined " + str(fine) + " " + coin_emoji)
+                description = "You were caught trying to rob " + str(member.name) + "'s bank, and were fined " + str(numformat(fine)) + " " + coin_emoji)
               embed.set_author(
                 name = ctx.author.display_name,
                 icon_url=ctx.author.avatar_url)
@@ -1031,7 +1071,7 @@ class Economy(commands.Cog):
             }
 
           if (given > (db[user]["bal"] + db[user]["bank"])):
-            embed.add_field(name="You don't have " + str(arg) + " " +
+            embed.add_field(name="You don't have " + str(numformat(arg)) + " " +
                                 coins + " to give!",
                                 value=":sob:")
 
@@ -1051,7 +1091,7 @@ class Economy(commands.Cog):
             # Add the amount to the receiver
             db[receiver]["bal"] += (given+remainder)
 
-            embed.add_field(name=f"You gifted {member.name} " + str(arg) + " " +
+            embed.add_field(name=f"You gifted {member.name} " + str(numformat(arg)) + " " +
                                 coins,
                                 value=":tada:")
         else:

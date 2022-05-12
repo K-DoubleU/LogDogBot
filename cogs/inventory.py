@@ -6,6 +6,15 @@ import time
 from discord.ext.commands import cooldown, BucketType
 import typing
 
+
+def numformat(num):
+      num = float('{:.3g}'.format(num))
+      magnitude = 0
+      while abs(num) >= 1000:
+          magnitude += 1
+          num /= 1000.0
+      return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+
 class Inventory(commands.Cog):
 
   def __init__(self, bot):
@@ -47,6 +56,7 @@ class Inventory(commands.Cog):
       "coins5" : str(discord.utils.get(self.bot.emojis, name='coins5')),
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
       "minion" : str(discord.utils.get(self.bot.emojis, name='Fridge')),
+      "ruby" : str(discord.utils.get(self.bot.emojis, name='ruby')),
       "ticket": ":tickets:"
     }
     
@@ -84,7 +94,7 @@ class Inventory(commands.Cog):
 
       embed.add_field(
         name = emoji["coins"],
-        value = total
+        value = numformat(total)
       )
       
       if("sap" in db[user]["inv"].keys()):
@@ -96,10 +106,12 @@ class Inventory(commands.Cog):
         
         if(item in emoji.keys()): 
           item_name = emoji[item]
+
+        if(amount == 0): continue
           
         embed.add_field(
           name = item_name,
-          value = amount
+          value = numformat(amount)
         )
 
       if("print" in db[user]):
@@ -114,11 +126,10 @@ class Inventory(commands.Cog):
 
         embed.add_field(
           name = "Minion:",
-          value = emoji["minion"] + "  Lvl " + str(db[user]["minion"])
+          value = emoji["minion"] + "  Lvl " + str(db[user]["minion"]),
+          inline = False
         )
 
-      
-      
       await ctx.send(embed=embed)
         
     
@@ -131,11 +142,13 @@ class Inventory(commands.Cog):
 
     emoji = {
       "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
-      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire'))
+      "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
+      "ruby" : str(discord.utils.get(self.bot.emojis, name='ruby')),
     }
 
     itemlist = {
-      "sapphire":420
+      "sapphire":420,
+      "ruby":1000
     }
 
     user = str(ctx.author.id)
@@ -210,7 +223,7 @@ class Inventory(commands.Cog):
         
         embed.add_field(
           name = "Item(s) Sold Successfully",
-          value = "Sold: " + str(amount) + " " + emoji[arg] + "\nProfit: " + str(profit) + " " + emoji["coins"]
+          value = "Sold: " + str(amount) + " " + emoji[arg] + "\nProfit: " + str(numformat(profit)) + " " + emoji["coins"]
         )
 
         db[user]["inv"][arg] -= amount
@@ -354,6 +367,7 @@ class Inventory(commands.Cog):
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
       "ticket": ":tickets:",
       "fridge": str(discord.utils.get(self.bot.emojis, name='Fridge')),
+      "ruby": str(discord.utils.get(self.bot.emojis, name='ruby')),
       "printer": ":printer:"
     }
 
@@ -361,7 +375,8 @@ class Inventory(commands.Cog):
       "sapphire" : "https://i.imgur.com/kzH7sGv.png",
       "fridge" : "https://i.imgur.com/vDgZeTY.png",
       "printer" : "https://i.imgur.com/lU1suPR.png",
-      "ticket" : "https://i.imgur.com/eFX2Z6h.png"
+      "ticket" : "https://i.imgur.com/eFX2Z6h.png",
+      "ruby" : "https://i.imgur.com/VAOY9KY.png"
     }
 
     # Dictionary of viewable items
@@ -381,6 +396,10 @@ class Inventory(commands.Cog):
       "printer" : {
         "function" : "GP Printer that generates 100 gp per hour.",
         "price":10000
+      },
+      "ruby" : {
+        "function" : "A red gem. Wow. Amazing. Even more amazing than sapphires.",
+        "price":1000
       }
     }
 
@@ -428,7 +447,7 @@ class Inventory(commands.Cog):
         
         # If it's gotten past this point, we should be good to view
 
-        item_details = "**Description:** " + str(itemlist[arg]["function"]) + "\n**Price:** " + str(itemlist[arg]["price"]) + " " + emoji["coins"]
+        item_details = "**Description:** " + str(itemlist[arg]["function"]) + "\n**Price:** " + str(numformat(itemlist[arg]["price"])) + " " + emoji["coins"]
         
         embed.add_field(
           name = emoji[arg],

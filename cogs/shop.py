@@ -21,12 +21,27 @@ itemlist = [
     "max":999
   },
   {
+    "name":["Thieving", "thieving"],
+    "desc": "Unlocks the ability to rob banks.",
+    "price": 25000,
+    "max":1
+  },
+  {
     "name":["Fridge", "minion"],
-    "desc": "A basic fridge minion. Can be sent on quests for loot.",
+    "desc": "A basic fridge minion. Can be sent on quests for loot, and attack other users.",
     "price": 420000,
     "max":1
   }
+  
 ]
+
+def numformat(num):
+      num = float('{:.3g}'.format(num))
+      magnitude = 0
+      while abs(num) >= 1000:
+          magnitude += 1
+          num /= 1000.0
+      return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
 class Shop(commands.Cog):
 
@@ -43,6 +58,7 @@ class Shop(commands.Cog):
       "coins" : str(discord.utils.get(self.bot.emojis, name='coins')),
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
       "minion" : str(discord.utils.get(self.bot.emojis, name='Fridge')),
+      "thieving" : str(discord.utils.get(self.bot.emojis, name='thieving')),
       "ticket": ":tickets:",
       "printer":":printer:"
     }
@@ -51,12 +67,14 @@ class Shop(commands.Cog):
       title = "Grand Exchange",
       description = "Welcome to the GE!"
     )
+    
     embed.set_author(
       name = "Log Dog Bot",
       icon_url = self.bot.user.avatar_url
     )
 
-   
+    
+    
     for item in itemlist:
       name = item["name"][0]
       price = item["price"]
@@ -68,7 +86,7 @@ class Shop(commands.Cog):
       
       embed.add_field(
         name = emoji[getemoji] + " " + name,
-        value = f"**{price}** " + emoji["coins"] + f"\n{desc}"
+        value = f"**{numformat(price)}** " + emoji["coins"] + f"\n{desc}"
         
       )
 
@@ -87,6 +105,7 @@ class Shop(commands.Cog):
     emoji = {
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
       "minion" : str(discord.utils.get(self.bot.emojis, name='Fridge')),
+      "thieving" : str(discord.utils.get(self.bot.emojis, name='thieving')),
       "printer":":printer:"
     }
     
@@ -169,6 +188,18 @@ class Shop(commands.Cog):
 
               await ctx.send(embed=embed)
               return
+
+          if(arg == "thieving"):
+
+            if("thieving" in db[user] or amount != 1):
+
+              embed.add_field(
+                name = ":x: Purchase Failed",
+                value = "You have already unlocked " + emoji["thieving"]
+              )
+
+              await ctx.send(embed=embed)
+              return
               
           if(arg == "sapphire"):
 
@@ -223,6 +254,11 @@ class Shop(commands.Cog):
           if(arg == "minion"):
 
             db[user]["minion"] = 1
+
+          # If they buy thieving
+          if(arg == "thieving"):
+
+            db[user]["thieving"] = 1
             
           # Money handling done below
           
@@ -241,7 +277,7 @@ class Shop(commands.Cog):
         # Now we let them know it was successful
           embed.add_field(
             name = ":white_check_mark: Purchase Successful",
-            value = "You have purchased **" + str(amount) + " " + emoji[item["name"][1]] + "** for " + str(item["price"] * amount) + " " + coins
+            value = "You have purchased **" + str(amount) + " " + emoji[item["name"][1]] + "** for " + str(numformat(item["price"] * amount)) + " " + coins
           )
 
           await ctx.send(embed=embed)

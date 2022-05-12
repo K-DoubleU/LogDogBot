@@ -34,6 +34,9 @@ class Admin(commands.Cog):
     if("gamba" in message.content.lower()):
       await message.add_reaction(gamba)
 
+    if self.bot.user.mentioned_in(message):
+      await message.channel.send("DON'T PING ME MOTHERFUCKER")
+
   @commands.command(hidden=True)
   async def purge(self, ctx, arg = 1):
 
@@ -54,6 +57,32 @@ class Admin(commands.Cog):
       return
 
     await ctx.channel.purge(limit=arg)
+
+  @commands.command(hidden=True)
+  async def kill(self, ctx, member: discord.Member):
+
+    if(ctx.author.id != 332601516626280450):
+      await ctx.send("You do not have the required role(s) to use this command. Fuck off.")
+      return
+
+    embed = discord.Embed(
+      title = "REST IN PIECE, BITCH"
+    )
+    
+    if(member):
+
+      user = str(member.id)
+      
+      if(user in db):
+        embed.add_field(
+          name = member.name,
+          value = "ily im sorry I'm testing this pls don't hate me"
+        )
+
+        del db[user]
+
+        await ctx.send(embed=embed)
+      
 
   # DEV LOG COMMAND
   @commands.command(hidden=True)
@@ -100,7 +129,7 @@ class Admin(commands.Cog):
       
 
   # GP Giveaway command
-  @commands.command(aliases = ["giveaway", "drop"], help = "Starts a giveaway in the current channel. Giveaways will currently last for 5 minutes by default. You must specify the amount of gold to be included in the giveaway. The prize value must be between 100 and 100000\nExample: '.startgiveaway 5000'")
+  @commands.command(hidden = True,aliases = ["giveaway", "drop"], help = "Starts a giveaway in the current channel. Giveaways will currently last for 5 minutes by default. You must specify the amount of gold to be included in the giveaway. The prize value must be between 100 and 100000\nExample: '.startgiveaway 5000'")
   async def startgiveaway(self, ctx, arg):
 
     ceo_role = discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles)
@@ -303,6 +332,21 @@ class Admin(commands.Cog):
     user = str(ctx.author.id)
 
     del db[user]["inv"]
+
+  @commands.command(hidden=True)
+  async def giveruby(self,ctx):
+    
+    if str(ctx.author.id) != "332601516626280450": return
+
+    user = str(ctx.author.id)
+
+    if("ruby" in db[user]["inv"]):
+
+      db[user]["inv"]["ruby"] += 1
+
+    else:
+
+      db[user]["inv"]["ruby"] = 1
 
 def setup(bot):
   bot.add_cog(Admin(bot))
