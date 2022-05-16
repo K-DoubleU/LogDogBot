@@ -57,6 +57,7 @@ class Inventory(commands.Cog):
       "sapphire" : str(discord.utils.get(self.bot.emojis, name='sapphire')),
       "minion" : str(discord.utils.get(self.bot.emojis, name='Fridge')),
       "ruby" : str(discord.utils.get(self.bot.emojis, name='ruby')),
+      "bones" : str(discord.utils.get(self.bot.emojis, name='bones')),
       "ticket": ":tickets:"
     }
     
@@ -469,6 +470,8 @@ class Inventory(commands.Cog):
     
     except Exception as e:
       print(e)
+
+  #Placeholder for stats display message
 
 def setup(bot):
   bot.add_cog(Inventory(bot))

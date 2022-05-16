@@ -5,6 +5,7 @@ import random
 import time
 from discord.ext.commands import cooldown, BucketType
 import typing
+from discord.utils import get, find
 
 def numformat(num):
       num = float('{:.3g}'.format(num))
@@ -55,65 +56,91 @@ class Economy(commands.Cog):
     @commands.command(
         aliases=["bal"],
         help="Displays the user's balance, or the balance of a mentioned user")
-    async def balance(self, ctx, member: discord.Member = None):
+    async def balance(self, ctx, *args):
 
         
-        coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
-      
-        sapphire = str(discord.utils.get(self.bot.emojis, name='sapphire'))
-      
-        user = str(ctx.author.id)
+      coin_emoji = str(discord.utils.get(self.bot.emojis, name='coins'))
+    
+      sapphire = str(discord.utils.get(self.bot.emojis, name='sapphire'))
+    
+      user = str(ctx.author.id)
 
-        allowed_channels = [972259001062526976,
-                         971845967483658260]
-        if ctx.channel.id not in allowed_channels:
-          await ctx.send("Wrong channel, dumbass")
-          return
+      allowed_channels = [972259001062526976,
+                       971845967483658260]
+      if ctx.channel.id not in allowed_channels:
+        await ctx.send("Wrong channel, dumbass")
+        return
+
+      guild = self.bot.get_guild(893266661698838538)
+      
+      if (args):
+    
+        if ("@" in args[0]):
+
+          arg = args[0]
           
-        if (member):
+          member = str(arg[2:20])
+          
+          if(member in db):
+            
+            if("bal" not in db[member]):
 
-            if (member == ctx.bot.user):
-                bal_msg = "Log Dog Bot will not let you see their balance!"
+              await ctx.send("No balance found")
+              return
 
-                embed = discord.Embed(title=bal_msg + " :rage:")
-                embed.set_author(name="Log Dog Bot",
-                                 icon_url=ctx.bot.user.avatar_url)
+          else:
 
-            else:
+            await ctx.send("User not found")
+            return
 
-                user = str(member.id)
-
-                embed = discord.Embed(title=":bank: Log Dog Banking")
-
-                embed.add_field(name="Balance",
-                                value=str(numformat(db[user]["bal"])) + " " + coin_emoji)
-    
-                embed.add_field(name="Bank",
-                                value=str(numformat(db[user]["bank"])) + " " + coin_emoji,
-                                inline=False)
-    
-                # Check for sapphires
-                if("inv" in db[user]):
-                  if("sapphire" in db[user]["inv"]):
-    
-                    sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(numformat(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420)))
-                  
-                  else:
-                    sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
-                else:
-                  sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
-                  
-                embed.add_field(name="Networth",
-                                value=sendmsg,
-                                inline=False)
-    
-                embed.set_author(name=ctx.author.display_name,
-                                 icon_url=ctx.author.avatar_url)
+          member = ctx.guild.get_member(int(member))
 
         else:
-          
-            user = str(ctx.author.id)
+  
+          try:
 
+            arg = " ".join(args).lower()
+            
+            member = discord.utils.find(lambda x: x.name.lower() == arg or x.display_name.lower() == arg, guild.members)
+                
+          except Exception as e:
+
+            print(e)
+            
+            embed = discord.Embed(
+              title=":bank: Log Dog Banking",
+              description="User not found"
+            )
+
+            await ctx.send(embed=embed)
+            return
+            
+
+        if (member == ctx.bot.user):
+          bal_msg = "Log Dog Bot will not let you see their balance!"
+  
+          embed = discord.Embed(title=bal_msg + " :rage:")
+          embed.set_author(name="Log Dog Bot",
+                           icon_url=ctx.bot.user.avatar_url)
+
+        else:
+
+            try:
+  
+              user = str(member.id)
+  
+            except Exception as e:
+
+              print(e)
+              
+              embed = discord.Embed(
+                title=":bank: Log Dog Banking",
+                description=":x: User not found"
+              )
+
+              await ctx.send(embed=embed)
+              return
+            
             embed = discord.Embed(title=":bank: Log Dog Banking")
 
             embed.add_field(name="Balance",
@@ -138,13 +165,44 @@ class Economy(commands.Cog):
                             value=sendmsg,
                             inline=False)
 
-            embed.set_author(name=ctx.author.display_name,
-                             icon_url=ctx.author.avatar_url)
+            embed.set_author(name=member.display_name,
+                             icon_url=member.avatar_url)
 
-        if user not in db:
-            db[user]["bal"] = 0
+      else:
+        
+          user = str(ctx.author.id)
 
-        await ctx.send(embed=embed)
+          embed = discord.Embed(title=":bank: Log Dog Banking")
+
+          embed.add_field(name="Balance",
+                          value=str(numformat(db[user]["bal"])) + " " + coin_emoji)
+
+          embed.add_field(name="Bank",
+                          value=str(numformat(db[user]["bank"])) + " " + coin_emoji,
+                          inline=False)
+
+          # Check for sapphires
+          if("inv" in db[user]):
+            if("sapphire" in db[user]["inv"]):
+
+              sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji + "\n" + str(db[user]["inv"]["sapphire"]) + " " + sapphire + "\n**Total:** " + str(numformat(db[user]["bank"] + db[user]["bal"] + (db[user]["inv"]["sapphire"] * 420)))
+            
+            else:
+              sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
+          else:
+            sendmsg = str(numformat(db[user]["bank"] + db[user]["bal"])) + " " + coin_emoji
+            
+          embed.add_field(name="Networth",
+                          value=sendmsg,
+                          inline=False)
+
+          embed.set_author(name=ctx.author.display_name,
+                           icon_url=ctx.author.avatar_url)
+
+      if user not in db:
+          db[user]["bal"] = 0
+
+      await ctx.send(embed=embed)
 
 
     # BEG COMMAND
@@ -321,7 +379,7 @@ class Economy(commands.Cog):
         aliases=["steal"],
         help="Steals gp from a mentioned user\nCooldown: 15 Minutes")
     @commands.cooldown(1, 900, commands.BucketType.user)
-    async def rob(self, ctx, member: discord.Member = None):
+    async def rob(self, ctx, *args):
 
       allowed_channels = [972259001062526976,
                          971845967483658260]
@@ -334,10 +392,37 @@ class Economy(commands.Cog):
       
       try:
 
-        if("@" not in ctx.message.content): 
-
-          ctx.command.reset_cooldown(ctx)
-          raise 
+        guild = self.bot.get_guild(893266661698838538)
+      
+        if (args):
+      
+          if ("@" in args[0]):
+  
+            arg = args[0]
+            
+            member = str(arg[2:20])
+            
+            if(member in db):
+              
+              if("bal" not in db[member]):
+  
+                await ctx.send("No balance found")
+                
+                return
+  
+            else:
+  
+              await ctx.send("User not found")
+              
+              return
+  
+            member = ctx.guild.get_member(int(member))
+  
+          else:
+  
+              arg = " ".join(args).lower()
+              
+              member = discord.utils.find(lambda x: x.name.lower() == arg or x.display_name.lower() == arg, guild.members)
           
         chance = random.randint(1,8)
           
@@ -806,7 +891,7 @@ class Economy(commands.Cog):
         aliases=["robbank"],
         help="Steals gp from a mentioned user's bank.\nSuccess rate: 20%\nCooldown: 3 Hours")
     @commands.cooldown(1, 10800, commands.BucketType.user)
-    async def bankrob(self, ctx, member: discord.Member = None):
+    async def bankrob(self, ctx, *args):
 
       allowed_channels = [972259001062526976,
                          971845967483658260]
@@ -819,6 +904,38 @@ class Economy(commands.Cog):
       user = str(ctx.author.id)
       
       try:
+
+        guild = self.bot.get_guild(893266661698838538)
+      
+        if (args):
+      
+          if ("@" in args[0]):
+  
+            arg = args[0]
+            
+            member = str(arg[2:20])
+            
+            if(member in db):
+              
+              if("bal" not in db[member]):
+  
+                await ctx.send("No balance found")
+                
+                return
+  
+            else:
+  
+              await ctx.send("User not found")
+              
+              return
+  
+            member = ctx.guild.get_member(int(member))
+  
+          else:
+  
+              arg = " ".join(args).lower()
+              
+              member = discord.utils.find(lambda x: x.name.lower() == arg or x.display_name.lower() == arg, guild.members)
         
         chance = random.randint(1,10)
 
@@ -851,7 +968,7 @@ class Economy(commands.Cog):
           if(db[user]["bank"]+db[user]["bal"] < 10000):
               embed.add_field(
                 name=":x: Error",
-                value=f"You cannot rob a user with less than **10K** " + coin_emoji)
+                value=f"You cannot rob a bank with less than **10K** " + coin_emoji)
             
               embed.set_author(
                 name = ctx.author.display_name,

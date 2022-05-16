@@ -14,7 +14,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=".",intents=discord.Intents.all())
 
-cogs = ["cogs.members", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc", "cogs.minion", "cogs.pvp"]
+cogs = ["cogs.members", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc", "cogs.minion", "cogs.pvp", "cogs.pvm"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.

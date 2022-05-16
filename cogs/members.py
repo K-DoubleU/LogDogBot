@@ -8,6 +8,7 @@ import typing
 import datetime
 from discord.utils import get
 import asyncio
+from discord.ext import tasks, commands
 
 
 """
@@ -273,6 +274,7 @@ class Members(commands.Cog):
   
   def __init__(self, bot):
     self.bot = bot
+    # self.rankupdater.start()
     
   @commands.Cog.listener()
   async def on_message(self, message):
@@ -282,6 +284,88 @@ class Members(commands.Cog):
 
     if message.channel.id == 974088082401943562:
       await message.delete()
+
+
+  #AUTO RANK UPDATER
+  @tasks.loop(seconds=10800)
+  async def rankupdater(self):
+
+    guild = self.bot.get_guild(893266661698838538)
+    channel = self.bot.get_channel(971845967483658260)
+
+    role_list = [
+        894376839454269491,
+        894376617999233026,
+        894376531101642844,
+        894376448322838558,
+        894376273000955975,
+        894375804874653756,
+        894376017739808798
+    ]
+    
+    for user, entries in db.items():
+  
+      if("clan" not in entries): continue
+  
+      member = guild.get_member(int(user))
+  
+      if(member is None): continue
+      
+      print(member)
+      
+      start_date = db[user]["clan"]["start"]
+  
+      datestart = start_date.replace("-", " ")
+      
+      d = datetime.datetime.strptime(datestart, '%d %b %Y')
+  
+      today = datetime.datetime.now()
+  
+      months = (today.year - d.year) * 12 + (today.month - d.month)
+  
+      print(months)
+      
+      print("Joined: " + start_date + "\nTime since joining: " + str(months) + " months")
+  
+      if(months >= 16):
+        roleid = 894376839454269491
+      elif(months >= 12):
+        roleid = 894376617999233026
+      elif(months >= 9):
+        roleid = 894376531101642844
+      elif(months >= 6):
+        roleid = 894376448322838558
+      elif(months >= 4):
+        roleid = 894376273000955975
+      elif(months >= 2):
+        roleid = 894375804874653756
+      elif(months >= 1):
+        roleid = 894376017739808798
+      else:
+        roleid = 894376017739808798
+  
+      for r in role_list:
+  
+        # store the current role from the current id in the loop
+        role = get(guild.roles, id = r)
+  
+        # If the user already has this role...
+        if(role in member.roles):
+          print(role)
+  
+          #If they have the role already, we want to make sure it's the role they should have
+          if(roleid != r):
+            #If it's not, we remove it
+            await member.remove_roles(role)
+            print("removed role")
+  
+          # Otherwise, we'll add it
+        else:
+          if(roleid == r):
+            await member.add_roles(role)
+            print("added role")
+
+    await channel.send("Roles Updated Automatically")
 
   # REMOVE CLAN COMMAND
   @commands.command(help = "Removes clan information from a specified user. You can either mention the user or type their IGN.\nExample: .removeclan @FridgeBot\nExample: .removeclan xTreeChopper69x")

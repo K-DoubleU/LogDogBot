@@ -229,7 +229,7 @@ class Minion(commands.Cog):
   # ATTACK COMMAND
   @commands.command(help="Send your minion to attack another user. Has a chance to steal the user's gems.")
   @commands.cooldown(1, 1800, commands.BucketType.user)
-  async def attack(self, ctx, member: discord.Member = None):
+  async def attack(self, ctx, *args):
 
     user = str(ctx.author.id)
 
@@ -249,6 +249,38 @@ class Minion(commands.Cog):
     )
 
     try:
+
+      guild = self.bot.get_guild(893266661698838538)
+      
+      if (args):
+    
+        if ("@" in args[0]):
+
+          arg = args[0]
+          
+          member = str(arg[2:20])
+          
+          if(member in db):
+            
+            if("bal" not in db[member]):
+
+              await ctx.send("No balance found")
+              
+              return
+
+          else:
+
+            await ctx.send("User not found")
+            
+            return
+
+          member = ctx.guild.get_member(int(member))
+
+        else:
+
+            arg = " ".join(args).lower()
+            
+            member = discord.utils.find(lambda x: x.name.lower() == arg or x.display_name.lower() == arg, guild.members)
       
       if(user not in db):
         db[user] = {
