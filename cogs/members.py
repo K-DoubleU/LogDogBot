@@ -313,12 +313,15 @@ class Members(commands.Cog):
 
       userfound = False
       
-      if ("@" in args):
+      if ("@" in args[0]):
 
         arg = args[0]
+
         
-        to_remove = arg[2:17]
-  
+        to_remove = arg[2:20]
+
+        print(to_remove)
+        
         if(to_remove in db):
           
           if("clan" in db[to_remove]):
@@ -403,6 +406,7 @@ class Members(commands.Cog):
       print(error)
 
 
+  # Set IGN Command
   @commands.command(help = "Sets an in-game name for a specified discord user. \nExample: '.setign @FridgeBot xTreeChopper69x'")
   async def setign(self, ctx, member: discord.Member, *args):
 
@@ -504,27 +508,33 @@ class Members(commands.Cog):
 
     try:
 
-      # Split the arg so we can check for the month
-      argsplit = arg.split("-")
-
-      datestart = arg.replace("-", " ")
-
-      if(argsplit[1].isdigit()):
-        # If they entered a number for month, we handle it here
-        d = datetime.datetime.strptime(datestart, '%d %m %Y')
-
+      # If arg is today, we need to make the date = today's date
+      if(arg.lower() == "today"):
+        
+        d = datetime.datetime.now()
+      
       else:
+      # Split the arg so we can check for the month
+        argsplit = arg.split("-")
 
-        if(len(argsplit[1]) > 3):
-          d = datetime.datetime.strptime(datestart, '%d %B %Y')
+        datestart = arg.replace("-", " ")
 
+        if(argsplit[1].isdigit()):
+          # If they entered a number for month, we handle it here
+          d = datetime.datetime.strptime(datestart, '%d %m %Y')
+  
         else:
-          d = datetime.datetime.strptime(datestart, '%d %b %Y')
+  
+          if(len(argsplit[1]) > 3):
+            d = datetime.datetime.strptime(datestart, '%d %B %Y')
+  
+          else:
+            d = datetime.datetime.strptime(datestart, '%d %b %Y')
 
       datereformat = d.strftime('%d %b %Y')
       
-
       datetoadd = "-".join(datereformat.split())
+      
       print("date to add: " + datetoadd)
 
       msg_embed = "Setting **" + member.name + "'s** start date:"
@@ -538,13 +548,13 @@ class Members(commands.Cog):
 
       embed.add_field(
         name = field_embed,
-        value = "React with :white_check_mark: to confirm\nReact with :x: to cancel"
+        value = "React with :white_check_mark: to confirm"
       )
 
       msg = await ctx.send(embed=embed)
 
       await msg.add_reaction("✅")
-      await msg.add_reaction("❌")
+      
 
       def check(reaction, user):
         

@@ -19,6 +19,12 @@ class Misc(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
 
+  @commands.command()
+  async def jrod(self,ctx):
+
+    await ctx.message.delete()
+    await ctx.send("<@235564731685928970> RBI")
+    
   # LVND COMMAND
   @commands.command()
   async def lvnd(self, ctx):

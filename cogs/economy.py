@@ -840,6 +840,8 @@ class Economy(commands.Cog):
           
           user = str(member.id)
           robbed = str(member.name)
+
+          winner = str(ctx.author.id)
           
           if user not in db:
               await ctx.send("That user does not have an existing bank account")
@@ -889,8 +891,14 @@ class Economy(commands.Cog):
               caught = False
 
             if(caught):
+              
               # Generates the amount fined if caught
-              fine = random.randint(100, int(db[user]["bal"]/10))
+              if(db[winner]["bal"] + db[winner]["bank"] > 1000):
+                
+                fine = random.randint(100, int(db[user]["bal"]/10))
+
+              else:
+                fine = random.randint(20, 450)
 
               # Here we grab the author's balance and bank entries
               user = str(ctx.author.id)
