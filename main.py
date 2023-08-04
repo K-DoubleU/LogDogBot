@@ -33,6 +33,7 @@ async def on_ready():
         except Exception as e:
             print(e)
 
+
 @bot.event
 async def on_member_join(member):
 

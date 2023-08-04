@@ -13,7 +13,7 @@ def numformat(num):
       while abs(num) >= 1000:
           magnitude += 1
           num /= 1000.0
-      return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+      return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T', 'Qa','Qi','Sx','Sp','Oc','No','Dc'][magnitude])
   
 class Economy(commands.Cog):
   

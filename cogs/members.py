@@ -274,7 +274,7 @@ class Members(commands.Cog):
   
   def __init__(self, bot):
     self.bot = bot
-    # self.rankupdater.start()
+    self.rankupdater.start()
     
   @commands.Cog.listener()
   async def on_message(self, message):
@@ -310,6 +310,8 @@ class Members(commands.Cog):
       member = guild.get_member(int(user))
   
       if(member is None): continue
+
+      if("start" not in entries["clan"]): continue
       
       print(member)
       
@@ -365,7 +367,7 @@ class Members(commands.Cog):
             await member.add_roles(role)
             print("added role")
 
-    await channel.send("Roles Updated Automatically")
+    
 
   # REMOVE CLAN COMMAND
   @commands.command(help = "Removes clan information from a specified user. You can either mention the user or type their IGN.\nExample: .removeclan @FridgeBot\nExample: .removeclan xTreeChopper69x")
@@ -518,6 +520,9 @@ class Members(commands.Cog):
     logdoggerid = 893277099350163518
     logdoggerrole = get(ctx.guild.roles, id = logdoggerid)
 
+    guestid = 893284742475157515
+    guestrole = get(ctx.guild.roles, id = guestid)
+
     await ctx.message.delete()
     
     user = str(member.id)
@@ -541,6 +546,10 @@ class Members(commands.Cog):
     if(logdoggerrole not in member.roles):
       
       await member.add_roles(logdoggerrole)
+
+    if(guestrole in member.roles):
+
+      await member.remove_roles(guestrole)
 
     embed = discord.Embed(
       title = ":pencil: Set IGN"
@@ -578,6 +587,9 @@ class Members(commands.Cog):
     
     logdoggerid = 893277099350163518
     logdoggerrole = get(ctx.guild.roles, id = logdoggerid)
+
+    guestid = 893284742475157515
+    guestrole = get(ctx.guild.roles, id = guestid)
 
     if(not arg):
       await ctx.send("You must provide a date")
@@ -681,6 +693,10 @@ class Members(commands.Cog):
         if(logdoggerrole not in member.roles):
           
           await member.add_roles(logdoggerrole)
+
+        if(guestrole in member.roles):
+
+          await member.remove_roles(guestrole)
           
         await ctx.send(embed=doneembed)
       
@@ -693,10 +709,25 @@ class Members(commands.Cog):
     print("executed")
 
   # UPDATE RANK COMMAND THIS IS THE CRAZY SHIT THAT DOES ALL THE ROLE UPDATING
-  @commands.command(hidden=True)
+  @commands.command(help = "Manually updates all discord roles for clan members, according to start date. If you mention a user, it will ONLY update the single user.")
   async def updaterank(self, ctx, member: discord.Member = None):
     
-    if(ctx.author.id != 332601516626280450): return
+    allowedroles = [
+      discord.utils.find(lambda r: r.name == 'CEO', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Board', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Staff', ctx.message.guild.roles),
+      discord.utils.find(lambda r: r.name == 'Bot Dev', ctx.message.guild.roles)
+    ]
+
+    allowed = False
+    
+    for role in ctx.author.roles:
+      if(role in allowedroles):
+        allowed = True
+
+    if(allowed == False):
+      await ctx.send("You do not have the required role(s) to use this command. Fuck off.")
+      return
 
     global ign_list
 
@@ -858,7 +889,7 @@ class Members(commands.Cog):
     print("executed")
 
   # GET RANKS COMMAND
-  @commands.command(help = "Outputs a list of IGN's - Rank, based on their start date. This command can take up to 10 seconds to execute. Please do not spam if you don't see the list right away.")
+  @commands.command(help = "Outputs a list of IGN's - Rank, based on their start date. This command can take up to 10-30 seconds to execute. Please do not spam if you don't see the list right away.")
   async def getranks(self,ctx):
     
     allowedroles = [
@@ -886,34 +917,46 @@ class Members(commands.Cog):
 
       if("clan" not in entries): continue
 
-      start_date = db[user]["clan"]["start"]
+      if("start") not in db[user]["clan"]:
+        db[user]["clan"]["start"] = "START_DATE_NOT_SET"
 
-      datestart = start_date.replace("-", " ")
-      
-      d = datetime.datetime.strptime(datestart, '%d %b %Y')
+      if db[user]["clan"]["start"] != "START_DATE_NOT_SET":
 
-      today = datetime.datetime.now()
+        start_date = db[user]["clan"]["start"]
+  
+        datestart = start_date.replace("-", " ")
+        
+        d = datetime.datetime.strptime(datestart, '%d %b %Y')
+  
+        today = datetime.datetime.now()
+  
+        months = (today.year - d.year) * 12 + (today.month - d.month)
+  
+        if(months >= 16):
+          roleid = 894376839454269491
+        elif(months >= 12):
+          roleid = 894376617999233026
+        elif(months >= 9):
+          roleid = 894376531101642844
+        elif(months >= 6):
+          roleid = 894376448322838558
+        elif(months >= 4):
+          roleid = 894376273000955975
+        elif(months >= 2):
+          roleid = 894375804874653756
+        elif(months >= 1):
+          roleid = 894376017739808798
+        else:
+          roleid = 894376017739808798
+  
+        roleadded = get(ctx.guild.roles, id = roleid)
 
-      months = (today.year - d.year) * 12 + (today.month - d.month)
-
-      if(months >= 16):
-        roleid = 894376839454269491
-      elif(months >= 12):
-        roleid = 894376617999233026
-      elif(months >= 9):
-        roleid = 894376531101642844
-      elif(months >= 6):
-        roleid = 894376448322838558
-      elif(months >= 4):
-        roleid = 894376273000955975
-      elif(months >= 2):
-        roleid = 894375804874653756
-      elif(months >= 1):
-        roleid = 894376017739808798
       else:
-        roleid = 894376017739808798
 
-      roleadded = get(ctx.guild.roles, id = roleid)
+        roleadded = db[user]["clan"]["start"]
+
+      if "ign" not in db[user]["clan"]:
+        db[user]["clan"]["ign"] = str(ctx.bot.get_user(int(user))) + " - IGN_NOT_SET"
 
       if(len(output_string) < 3900):
         output_string += db[user]["clan"]["ign"] + " - " + str(roleadded) + "\n"
@@ -935,8 +978,14 @@ class Members(commands.Cog):
       description = output_string2
     )
 
+    embed3 = discord.Embed(
+      title = "IGN - RANK (Page 3)",
+      description = output_string3
+    )
+
     await ctx.send(embed=embed)
     await ctx.send(embed=embed2)
+    await ctx.send(embed=embed3)
 
     
     print("executed")
