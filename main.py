@@ -2,10 +2,8 @@ import discord
 import os
 import requests
 import json
-from keep_alive import keep_alive
 from discord.ext import commands
 from discord.ext import tasks
-from replit import db
 from discord.utils import get
 
 
@@ -14,7 +12,10 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=".",intents=discord.Intents.all())
 
-cogs = ["cogs.members", "cogs.economy", "cogs.shop", "cogs.admin", "cogs.inventory", "cogs.misc", "cogs.minion", "cogs.pvp", "cogs.pvm"]
+cogs = [
+    # "cogs.members",
+    "cogs.admin",
+    "cogs.misc"]
 
 
 # This event occurs whenever the bot is started up. This will run every time the bot is restarted.
@@ -34,33 +35,18 @@ async def on_ready():
             print(e)
 
 
-@bot.event
-async def on_member_join(member):
+# @bot.event
+# async def on_member_join(member):
+#
+#     person = str(member.id)
+#     logdoggerid = 893277099350163518
+#     logdoggerrole = get(member.guild.roles, id = logdoggerid)
+#
+#     if(person in db):
+#       if("clan" in db[person]):
+#         await member.add_roles(logdoggerrole)
 
-    person = str(member.id)
-    logdoggerid = 893277099350163518
-    logdoggerrole = get(member.guild.roles, id = logdoggerid)
-    
-    if(person in db):
-      if("clan" in db[person]):
-        await member.add_roles(logdoggerrole)
 
-
-@tasks.loop(seconds=3600)
-async def hourly_gp():
-    for user in db:
-      if("print" in db[user]):
-        
-          # Grabs the printlvl of the user, and only increases their bal based on the printlvl
-
-        if(db[user]["print"] == 100): 
-          db[user]["bal"] += 100
-          print(user + " increased by " + str(db[user]["print"]))
-        if(db[user]["print"] == 10): 
-          db[user]["print"] = 100
-          print(user + " adjusted printer to " + str(db[user]["print"]))
-      
-      
 @bot.command(hidden=True)
 async def ping(ctx):
     await ctx.send(f"Bot latency: {round(bot.latency * 1000)}ms")
@@ -139,8 +125,6 @@ bot.help_command = MyHelp()
 # If repl ip is getting banned due to rate-limits, type 'kill 1' into Shell to reset ip
 
 
-hourly_gp.start()
 #Run the bot and keep it online
-keep_alive()
 
 bot.run(os.getenv('TOKEN'))
